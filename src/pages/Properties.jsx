@@ -31,14 +31,6 @@ const Properties = () => {
           const data = snapshot.val();
           results = Object.keys(data).map(key => ({ id: key, ...data[key] }));
           results.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        } else {
-          // Fallback if empty for demo
-          results = [
-            { id: '1', title: 'Luxury 3BHK Flat', price: 8500000, location: 'Kasarvadavali, Thane', type: 'Flat', purpose: 'Buy', images: ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=800'], createdAt: new Date().toISOString() },
-            { id: '2', title: 'Premium Commercial Shop', price: 4500000, location: 'Ghodbunder Road, Thane', type: 'Shop', purpose: 'Rent', images: ['https://images.unsplash.com/photo-1541971875076-8f970d573be6?auto=format&fit=crop&q=80&w=800'], createdAt: new Date().toISOString() },
-            { id: '3', title: 'Spacious 4BHK Villa', price: 15000000, location: 'Hiranandani Estate, Thane', type: 'House', purpose: 'Buy', images: ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=800'], createdAt: new Date().toISOString() },
-            { id: '4', title: 'Industrial Land', price: 25000000, location: 'Wagle Estate, Thane', type: 'Land', purpose: 'Buy', images: ['https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=800'], createdAt: new Date().toISOString() }
-          ];
         }
         setAllProperties(results);
         setFilteredProperties(results);

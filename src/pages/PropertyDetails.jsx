@@ -38,13 +38,6 @@ const PropertyDetails = () => {
         const snapshot = await get(child(ref(db), `properties/${id}`));
         if (snapshot.exists()) {
           setProperty({ id: snapshot.key, ...snapshot.val() });
-        } else {
-          // Placeholder for demo if id is 1, 2, or 3 from home page
-          const placeholders = {
-            '1': { title: 'Luxury 3BHK Flat', price: 8500000, location: 'City Center, Mumbai', type: 'Flat', description: 'Experience luxury living in this spacious 3BHK flat located in the heart of Mumbai. Features modern amenities, premium finishes, and breathtaking city views.', images: ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=1200', 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=1200'], size: '1500 sqft' },
-            '2': { title: 'Premium Commercial Shop', price: 4500000, location: 'Market Road, Pune', type: 'Shop', description: 'Highly visible commercial shop ideal for retail or office space. Located in a high-footfall area with excellent connectivity.', images: ['https://images.unsplash.com/photo-1541971875076-8f970d573be6?auto=format&fit=crop&q=80&w=1200'], size: '500 sqft' }
-          };
-          if (placeholders[id]) setProperty(placeholders[id]);
         }
       } catch (err) {
         console.error(err);
