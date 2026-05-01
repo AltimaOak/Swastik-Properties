@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { db, storage } from '../firebase/config';
+import { db } from '../firebase/config';
 import { ref, query, orderByChild, equalTo, get, push, remove, set } from 'firebase/database';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { uploadToCloudinary } from '../utils/cloudinary';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, 
@@ -32,6 +32,7 @@ const AgentDashboard = () => {
     price: '',
     location: '',
     type: 'Flat',
+    purpose: 'Buy',
     description: '',
     size: '',
     contactNumber: ''
@@ -70,18 +71,18 @@ const AgentDashboard = () => {
     setUploading(true);
     try {
       const imageUrls = [];
-      // Firebase Storage Upload Logic
+      
+      // Cloudinary Upload Logic
       for (const file of selectedFiles) {
-        // Create a unique filename
-        const uniqueFileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
-        const imageRef = storageRef(storage, `property_images/${uniqueFileName}`);
-        
-        // Upload the file
-        await uploadBytes(imageRef, file);
-        
-        // Get the download URL
-        const downloadUrl = await getDownloadURL(imageRef);
-        imageUrls.push(downloadUrl);
+        try {
+          const downloadUrl = await uploadToCloudinary(file);
+          if (downloadUrl) {
+            imageUrls.push(downloadUrl);
+          }
+        } catch (uploadErr) {
+          console.error(`Failed to upload ${file.name}:`, uploadErr);
+          throw new Error(`Failed to upload image ${file.name}`);
+        }
       }
 
       const newPropertyRef = push(ref(db, 'properties'));
@@ -116,7 +117,7 @@ const AgentDashboard = () => {
   };
 
   const resetForm = () => {
-    setFormData({ title: '', price: '', location: '', type: 'Flat', description: '', size: '', contactNumber: '' });
+    setFormData({ title: '', price: '', location: '', type: 'Flat', purpose: 'Buy', description: '', size: '', contactNumber: '' });
     setSelectedFiles([]);
   };
 
@@ -264,18 +265,31 @@ const AgentDashboard = () => {
                       onChange={(e) => setFormData({...formData, price: e.target.value})}
                       required
                     />
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Type</label>
-                      <select 
-                        className="w-full bg-zinc-50 border border-zinc-200 text-secondary px-4 py-3.5 rounded-2xl focus:outline-none focus:border-secondary shadow-sm font-bold"
-                        value={formData.type}
-                        onChange={(e) => setFormData({...formData, type: e.target.value})}
-                      >
-                        <option value="Flat">Flat</option>
-                        <option value="Shop">Shop</option>
-                        <option value="House">House</option>
-                        <option value="Land">Land</option>
-                      </select>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Type</label>
+                        <select 
+                          className="w-full bg-zinc-50 border border-zinc-200 text-secondary px-4 py-3.5 rounded-2xl focus:outline-none focus:border-secondary shadow-sm font-bold"
+                          value={formData.type}
+                          onChange={(e) => setFormData({...formData, type: e.target.value})}
+                        >
+                          <option value="Flat">Flat</option>
+                          <option value="Shop">Shop</option>
+                          <option value="House">House</option>
+                          <option value="Land">Land</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Purpose</label>
+                        <select 
+                          className="w-full bg-zinc-50 border border-zinc-200 text-secondary px-4 py-3.5 rounded-2xl focus:outline-none focus:border-secondary shadow-sm font-bold"
+                          value={formData.purpose || 'Buy'}
+                          onChange={(e) => setFormData({...formData, purpose: e.target.value})}
+                        >
+                          <option value="Buy">For Buy</option>
+                          <option value="Rent">For Rent</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
                   <Input 

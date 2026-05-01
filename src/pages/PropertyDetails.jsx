@@ -15,10 +15,12 @@ import {
   Send, 
   CheckCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  TrendingUp
 } from 'lucide-react';
 import Button from '../components/Button';
 import Input from '../components/Input';
+import emailjs from '@emailjs/browser';
 
 const PropertyDetails = () => {
   const { id } = useParams();
@@ -61,6 +63,7 @@ const PropertyDetails = () => {
     }
     setSubmitting(true);
     try {
+      // 1. Save to Firebase
       const newInquiryRef = push(ref(db, 'inquiries'));
       await set(newInquiryRef, {
         propertyId: id,
@@ -70,9 +73,28 @@ const PropertyDetails = () => {
         createdAt: new Date().toISOString(),
         propertyTitle: property.title
       });
+
+      // 2. Send Email via EmailJS
+      const templateParams = {
+        from_name: currentUser.displayName || 'Buyer',
+        from_email: inquiry.contact, // Contact info provided
+        subject: `New Inquiry: ${property.title}`,
+        message: inquiry.message,
+        property_title: property.title,
+        to_email: 'swastik_prop@rediffmail.com'
+      };
+
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_id', 
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_id',
+        templateParams,
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'public_key'
+      );
+
       setSubmitted(true);
     } catch (err) {
-      console.error(err);
+      console.error('Email/Firebase Error:', err);
+      alert('Failed to send inquiry. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -182,6 +204,13 @@ const PropertyDetails = () => {
                   <div className="flex items-center text-secondary font-black">
                     <Calendar size={20} className="mr-2" />
                     <span>{new Date(property.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-zinc-400 uppercase font-black tracking-widest mb-2">Purpose</span>
+                  <div className="flex items-center text-secondary font-black">
+                    <TrendingUp size={20} className="mr-2" />
+                    <span>For {property.purpose || 'Buy'}</span>
                   </div>
                 </div>
                 <div className="flex flex-col">

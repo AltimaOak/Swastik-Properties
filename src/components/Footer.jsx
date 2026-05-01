@@ -11,7 +11,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-6">
             <Link to="/" className="flex items-center space-x-2">
-              <img src="/logo.png" alt="Swastik Properties Logo" className="h-14 w-auto brightness-0 invert" />
+              <img src="/logo.png" alt="Swastik Properties Logo" className="h-14 w-auto" />
             </Link>
             <p className="text-sm leading-relaxed font-medium">
               Your trusted partner in finding the perfect home, shop, or land. We bring premium real estate solutions to your fingertips with transparency and excellence.
@@ -53,13 +53,17 @@ const Footer = () => {
                 <MapPin size={20} className="text-primary shrink-0" />
                 <span>Shop no.4, D3, Unnathi Woods Phase 4, Kasarvadavali, Thane West, Thane, Maharashtra 400615</span>
               </li>
-              <li className="flex items-center space-x-3">
-                <Phone size={20} className="text-primary shrink-0" />
-                <span>+91 99875 65490</span>
+              <li>
+                <a href="tel:+919987565490" className="flex items-center space-x-3 hover:text-primary transition-colors">
+                  <Phone size={20} className="text-primary shrink-0 pointer-events-none" />
+                  <span>+91 99875 65490</span>
+                </a>
               </li>
-              <li className="flex items-center space-x-3">
-                <Mail size={20} className="text-primary shrink-0" />
-                <span>swastik_prop@rediffmail.com</span>
+              <li>
+                <a href="mailto:swastik_prop@rediffmail.com" className="flex items-center space-x-3 hover:text-primary transition-colors">
+                  <Mail size={20} className="text-primary shrink-0 pointer-events-none" />
+                  <span>swastik_prop@rediffmail.com</span>
+                </a>
               </li>
             </ul>
           </div>

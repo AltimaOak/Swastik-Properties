@@ -21,10 +21,15 @@ const PropertyCard = ({ property }) => {
           alt={title}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
-        <div className="absolute top-4 left-4">
-          <span className="bg-primary text-black px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
+        <div className="absolute top-4 left-4 flex flex-col space-y-2">
+          <span className="bg-primary text-black px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg w-fit">
             {type}
           </span>
+          {property.purpose && (
+            <span className="bg-secondary text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg w-fit">
+              For {property.purpose}
+            </span>
+          )}
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-secondary/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
           <Link 

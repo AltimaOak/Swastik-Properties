@@ -5,6 +5,7 @@ import { db } from '../firebase/config';
 import { ref, push, set } from 'firebase/database';
 import Button from '../components/Button';
 import Input from '../components/Input';
+import emailjs from '@emailjs/browser';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -20,15 +21,34 @@ const Contact = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
+      // 1. Save to Firebase (Existing logic)
       const newMsgRef = push(ref(db, 'contact_messages'));
       await set(newMsgRef, {
         ...formData,
         createdAt: new Date().toISOString()
       });
+
+      // 2. Send Email via EmailJS
+      const templateParams = {
+        from_name: formData.name,
+        from_email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+        to_email: 'swastik_prop@rediffmail.com'
+      };
+
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_id', 
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_id',
+        templateParams,
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'public_key'
+      );
+
       setSubmitted(true);
       setFormData({ name: '', email: '', subject: '', message: '' });
     } catch (err) {
-      console.error(err);
+      console.error('Email/Firebase Error:', err);
+      alert('Failed to send message. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -51,22 +71,40 @@ const Contact = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mb-20">
           {/* Contact Info Cards */}
           <div className="lg:col-span-1 space-y-6">
-            {contactInfo.map((info, idx) => (
-              <motion.div 
-                key={idx}
-                whileHover={{ x: 10 }}
-                className="bg-white p-8 rounded-[2rem] border border-zinc-100 flex items-start space-x-6 shadow-premium"
-              >
-                <div className="w-12 h-12 bg-secondary/5 rounded-xl flex items-center justify-center text-secondary shrink-0">
-                  {info.icon}
+            {contactInfo.map((info, idx) => {
+              const isLink = info.label === 'Phone' || info.label === 'Email';
+              const href = info.label === 'Phone' 
+                ? `tel:${info.value.replace(/\s/g, '')}` 
+                : info.label === 'Email' 
+                  ? `mailto:${info.value}` 
+                  : null;
+
+              const CardContent = (
+                <motion.div 
+                  whileHover={{ x: 10 }}
+                  className="bg-white p-8 rounded-[2rem] border border-zinc-100 flex items-start space-x-6 shadow-premium h-full"
+                >
+                  <div className="w-12 h-12 bg-secondary/5 rounded-xl flex items-center justify-center text-secondary shrink-0 pointer-events-none">
+                    {info.icon}
+                  </div>
+                  <div>
+                    <h3 className="text-secondary/50 text-[10px] font-black uppercase tracking-widest mb-1">{info.label}</h3>
+                    <p className="text-zinc-900 font-bold text-lg group-hover:text-secondary transition-colors">{info.value}</p>
+                    <p className="text-zinc-400 text-sm mt-1 font-medium">{info.sub}</p>
+                  </div>
+                </motion.div>
+              );
+
+              return isLink ? (
+                <a key={idx} href={href} className="block group">
+                  {CardContent}
+                </a>
+              ) : (
+                <div key={idx}>
+                  {CardContent}
                 </div>
-                <div>
-                  <h3 className="text-secondary/50 text-[10px] font-black uppercase tracking-widest mb-1">{info.label}</h3>
-                  <p className="text-zinc-900 font-bold text-lg">{info.value}</p>
-                  <p className="text-zinc-400 text-sm mt-1 font-medium">{info.sub}</p>
-                </div>
-              </motion.div>
-            ))}
+              );
+            })}
 
             {/* Social Link Box */}
             <div className="bg-primary p-8 rounded-[2rem] text-black shadow-lg shadow-primary/20">
