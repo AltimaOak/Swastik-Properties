@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, MapPin, Shield, Star, Users, ArrowRight } from 'lucide-react';
 import PropertyCard from '../components/PropertyCard';
@@ -10,13 +10,24 @@ import { db } from '../firebase/config';
 const Home = () => {
   const [featuredProperties, setFeaturedProperties] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/properties?search=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate('/properties');
+    }
+  };
 
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
         const snapshot = await get(ref(db, 'properties'));
         let properties = [];
-        
+
         if (snapshot.exists()) {
           const data = snapshot.val();
           properties = Object.keys(data).map(key => ({ id: key, ...data[key] }));
@@ -24,7 +35,7 @@ const Home = () => {
           properties.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
           properties = properties.slice(0, 3);
         }
-        
+
         setFeaturedProperties(properties);
       } catch (error) {
         console.error("Error fetching properties:", error);
@@ -42,8 +53,8 @@ const Home = () => {
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0 z-0">
-          <img 
-            src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=2000" 
+          <img
+            src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=2000"
             alt="Hero Background"
             className="w-full h-full object-cover"
           />
@@ -63,12 +74,32 @@ const Home = () => {
             <p className="text-xl md:text-2xl text-zinc-800 mb-10 max-w-2xl mx-auto font-bold italic">
               Buy | Sell | Rent — Your journey to the perfect property starts here with trust and elegance.
             </p>
+
+            {/* Search Bar */}
+            <div className="max-w-3xl mx-auto mb-10 relative">
+              <form onSubmit={handleSearch} className="flex p-2 bg-white rounded-[2rem] shadow-2xl border border-zinc-100 group focus-within:border-primary/50 transition-all">
+                <div className="flex-grow flex items-center px-4">
+                  <Search className="text-zinc-400 mr-3 group-focus-within:text-secondary transition-colors" size={24} />
+                  <input 
+                    type="text" 
+                    placeholder="Search by title, location or property type..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full py-4 text-zinc-900 bg-transparent focus:outline-none font-medium placeholder:text-zinc-400"
+                  />
+                </div>
+                <button type="submit" className="bg-secondary text-white px-8 py-4 rounded-3xl font-black hover:bg-red-900 transition-all shadow-xl shadow-secondary/20">
+                  Search Now
+                </button>
+              </form>
+            </div>
+
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/properties">
                 <Button className="px-10 py-4 text-lg">Browse Properties</Button>
               </Link>
               <Link to="/contact">
-                <Button variant="secondary" className="px-10 py-4 text-lg">Contact Agent</Button>
+                <Button variant="secondary" className="px-10 py-4 text-lg">Connect with us</Button>
               </Link>
             </div>
           </motion.div>
@@ -127,7 +158,7 @@ const Home = () => {
             { icon: <Star className="text-secondary" size={40} />, title: "Premium Selection", desc: "We only list properties that meet our high standards of quality and value." },
             { icon: <Users className="text-secondary" size={40} />, title: "Expert Agents", desc: "Our experienced agents are here to guide you through every step of the process." }
           ].map((feature, idx) => (
-            <motion.div 
+            <motion.div
               key={idx}
               whileHover={{ scale: 1.05 }}
               className="p-10 bg-white border border-zinc-100 rounded-3xl hover:border-secondary/20 transition-all shadow-premium"
@@ -145,7 +176,7 @@ const Home = () => {
         <div className="container mx-auto px-4 md:px-6">
           <div className="bg-zinc-50 rounded-[3rem] p-12 md:p-20 relative overflow-hidden border border-zinc-100">
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -mr-32 -mt-32"></div>
-            
+
             <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div>
                 <h2 className="text-4xl md:text-5xl font-black text-zinc-900 mb-10">What Our <span className="text-secondary">Clients Say</span></h2>
@@ -169,8 +200,8 @@ const Home = () => {
                 </div>
               </div>
               <div className="hidden lg:block">
-                <img 
-                  src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=800" 
+                <img
+                  src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=800"
                   alt="Modern House"
                   className="rounded-3xl shadow-premium rotate-2 border-8 border-white"
                 />

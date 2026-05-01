@@ -55,7 +55,7 @@ const Contact = () => {
   };
 
   const contactInfo = [
-    { icon: <Phone />, label: 'Phone', value: '+91 99875 65490', sub: 'Mon-Sat 9:30am to 8:30pm' },
+    { icon: <Phone />, label: 'Phone', value: '+91 99875 65490', sub: 'Mon-Sun 9:30am to 8:30pm' },
     { icon: <Mail />, label: 'Email', value: 'swastik_prop@rediffmail.com', sub: '24/7 Online Support' },
     { icon: <MapPin />, label: 'Location', value: 'Shop no.4, Unnathi Woods, Thane', sub: 'Thane West, Maharashtra' }
   ];
@@ -145,7 +145,7 @@ const Contact = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Input 
                       label="Your Name"
-                      placeholder="John Doe"
+                      placeholder="Enter your name"
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
                       required
@@ -153,7 +153,7 @@ const Contact = () => {
                     <Input 
                       label="Email Address"
                       type="email"
-                      placeholder="john@example.com"
+                      placeholder="Enter your email"
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                       required

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ref, get } from 'firebase/database';
 import { db } from '../firebase/config';
 import PropertyCard from '../components/PropertyCard';
@@ -7,6 +8,7 @@ import { Search, Filter, SlidersHorizontal, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Properties = () => {
+  const [searchParams] = useSearchParams();
   const [allProperties, setAllProperties] = useState([]);
   const [filteredProperties, setFilteredProperties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,7 +17,7 @@ const Properties = () => {
     purpose: '',
     minPrice: '',
     maxPrice: '',
-    searchQuery: '',
+    searchQuery: searchParams.get('search') || '',
     bhk: ''
   });
   const [showFilters, setShowFilters] = useState(false);
