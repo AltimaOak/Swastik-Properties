@@ -25,37 +25,7 @@ const Home = () => {
           properties = properties.slice(0, 3);
         }
         
-        if (properties.length === 0) {
-          // Fallback sample data
-          setFeaturedProperties([
-            {
-              id: '1',
-              title: 'Luxury 3BHK Flat',
-              price: 8500000,
-              location: 'Kasarvadavali, Thane',
-              type: 'Flat',
-              images: ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=800']
-            },
-            {
-              id: '2',
-              title: 'Premium Commercial Shop',
-              price: 4500000,
-              location: 'Ghodbunder Road, Thane',
-              type: 'Shop',
-              images: ['https://images.unsplash.com/photo-1541971875076-8f970d573be6?auto=format&fit=crop&q=80&w=800']
-            },
-            {
-              id: '3',
-              title: 'Spacious 4BHK Villa',
-              price: 15000000,
-              location: 'Hiranandani Estate, Thane',
-              type: 'House',
-              images: ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=800']
-            }
-          ]);
-        } else {
-          setFeaturedProperties(properties);
-        }
+        setFeaturedProperties(properties);
       } catch (error) {
         console.error("Error fetching properties:", error);
       } finally {
@@ -131,10 +101,14 @@ const Home = () => {
               [1, 2, 3].map(n => (
                 <div key={n} className="h-[400px] bg-zinc-100 animate-pulse rounded-3xl"></div>
               ))
-            ) : (
+            ) : featuredProperties.length > 0 ? (
               featuredProperties.map(prop => (
                 <PropertyCard key={prop.id} property={prop} />
               ))
+            ) : (
+              <div className="col-span-full py-12 text-center bg-zinc-50 rounded-3xl border border-dashed border-zinc-200">
+                <p className="text-zinc-500 font-medium">New premium properties coming soon.</p>
+              </div>
             )}
           </div>
         </div>

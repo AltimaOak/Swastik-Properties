@@ -26,6 +26,8 @@ const AgentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [inquiries, setInquiries] = useState([]);
+  const [fetchingInquiries, setFetchingInquiries] = useState(true);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -35,15 +37,33 @@ const AgentDashboard = () => {
     purpose: 'Buy',
     description: '',
     size: '',
-    contactNumber: ''
+    contactNumber: '',
+    bhk: '1 BHK'
   });
   const [selectedFiles, setSelectedFiles] = useState([]);
 
   useEffect(() => {
     if (currentUser) {
       fetchAgentProperties();
+      fetchInquiries();
     }
   }, [currentUser]);
+
+  const fetchInquiries = async () => {
+    try {
+      const snapshot = await get(ref(db, 'inquiries'));
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const allInquiries = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+        // Filter by agentId
+        setInquiries(allInquiries.filter(i => i.agentId === currentUser.uid).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+      }
+    } catch (err) {
+      console.error("Error fetching inquiries:", err);
+    } finally {
+      setFetchingInquiries(false);
+    }
+  };
 
   const fetchAgentProperties = async () => {
     try {
@@ -117,7 +137,7 @@ const AgentDashboard = () => {
   };
 
   const resetForm = () => {
-    setFormData({ title: '', price: '', location: '', type: 'Flat', purpose: 'Buy', description: '', size: '', contactNumber: '' });
+    setFormData({ title: '', price: '', location: '', type: 'Flat', purpose: 'Buy', description: '', size: '', contactNumber: '', bhk: '1 BHK' });
     setSelectedFiles([]);
   };
 
@@ -139,8 +159,8 @@ const AgentDashboard = () => {
             <div className="absolute top-0 right-0 p-6 text-primary/10 -mr-4 -mt-4 group-hover:scale-110 transition-transform">
               <TrendingUp size={80} />
             </div>
-            <h3 className="text-zinc-400 text-[10px] font-black uppercase tracking-widest mb-2">Account Type</h3>
-            <p className="text-4xl font-black text-secondary italic uppercase tracking-tight">Agent</p>
+            <h3 className="text-zinc-400 text-[10px] font-black uppercase tracking-widest mb-2">Total Interests</h3>
+            <p className="text-5xl font-black text-secondary">{fetchingInquiries ? '...' : inquiries.length}</p>
           </div>
 
           <button 
@@ -182,6 +202,7 @@ const AgentDashboard = () => {
                         <ImageIcon size={12} className="mr-1" /> {p.images?.length || 0} Photos
                       </p>
                       <p className="text-secondary font-black text-sm italic">₹{p.price.toLocaleString('en-IN')}</p>
+                      {p.bhk && <p className="text-zinc-400 text-[10px] font-black uppercase tracking-widest mt-1">{p.bhk}</p>}
                     </div>
                   </div>
                   <div className="mt-6 flex items-center justify-between">
@@ -216,6 +237,58 @@ const AgentDashboard = () => {
               >
                 List Your First Property
               </button>
+            </div>
+          )}
+        </div>
+
+        {/* Inquiries Section */}
+        <div className="mt-12 bg-zinc-900 rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+          
+          <div className="flex items-center justify-between mb-10 relative z-10">
+            <h2 className="text-2xl md:text-3xl font-black italic flex items-center">
+              <TrendingUp className="mr-4 text-primary" />
+              <span>Buyer Interests & Inquiries</span>
+            </h2>
+            <span className="bg-primary text-black px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
+              {inquiries.length} New
+            </span>
+          </div>
+
+          {fetchingInquiries ? (
+            <div className="space-y-4">
+              {[1, 2].map(n => (
+                <div key={n} className="h-24 bg-white/5 animate-pulse rounded-2xl"></div>
+              ))}
+            </div>
+          ) : inquiries.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 relative z-10">
+              {inquiries.map(inq => (
+                <div key={inq.id} className="bg-white/5 border border-white/10 p-6 rounded-2xl hover:bg-white/10 transition-all">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                      <div className="flex items-center space-x-2 mb-2">
+                        <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${inq.type === 'interest' ? 'bg-primary text-black' : 'bg-secondary text-white'}`}>
+                          {inq.type === 'interest' ? 'Direct Interest' : 'Message Inquiry'}
+                        </span>
+                        <span className="text-white/40 text-[10px] font-medium">{new Date(inq.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <h4 className="text-lg font-bold text-primary mb-1">{inq.propertyTitle}</h4>
+                      <p className="text-white/60 text-sm font-medium">Interested Buyer: <span className="text-white font-bold">{inq.buyerName || inq.buyerEmail}</span></p>
+                    </div>
+                    <div className="flex flex-col md:items-end">
+                      <p className="text-white/80 text-sm mb-3 italic">"{inq.message}"</p>
+                      <a href={`mailto:${inq.contact}`} className="text-[10px] font-black uppercase tracking-widest bg-white text-secondary px-6 py-2.5 rounded-xl hover:bg-primary hover:text-black transition-all">
+                        Reply via Email
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-16 text-center bg-white/5 rounded-[2rem] border border-white/10">
+              <p className="text-white/40 font-medium italic">No inquiries received yet.</p>
             </div>
           )}
         </div>
@@ -306,6 +379,23 @@ const AgentDashboard = () => {
                     onChange={(e) => setFormData({...formData, size: e.target.value})}
                     required
                   />
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">BHK / Rooms</label>
+                    <select 
+                      className="w-full bg-zinc-50 border border-zinc-200 text-secondary px-4 py-3.5 rounded-2xl focus:outline-none focus:border-secondary shadow-sm font-bold"
+                      value={formData.bhk}
+                      onChange={(e) => setFormData({...formData, bhk: e.target.value})}
+                    >
+                      <option value="1 BHK">1 BHK</option>
+                      <option value="2 BHK">2 BHK</option>
+                      <option value="3 BHK">3 BHK</option>
+                      <option value="4 BHK">4 BHK</option>
+                      <option value="5+ BHK">5+ BHK</option>
+                      <option value="Shop">Shop/Commercial</option>
+                      <option value="Office">Office Space</option>
+                      <option value="Land">Plot/Land</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div className="space-y-2">

@@ -16,7 +16,9 @@ import {
   CheckCircle,
   ChevronLeft,
   ChevronRight,
-  TrendingUp
+  TrendingUp,
+  Heart,
+  Loader2
 } from 'lucide-react';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -31,6 +33,8 @@ const PropertyDetails = () => {
   const [inquiry, setInquiry] = useState({ message: '', contact: '' });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [liking, setLiking] = useState(false);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -64,7 +68,8 @@ const PropertyDetails = () => {
         message: inquiry.message,
         contact: inquiry.contact,
         createdAt: new Date().toISOString(),
-        propertyTitle: property.title
+        propertyTitle: property.title,
+        agentId: property.agentId || ''
       });
 
       // 2. Send Email via EmailJS
@@ -90,6 +95,35 @@ const PropertyDetails = () => {
       alert('Failed to send inquiry. Please try again.');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleLike = async () => {
+    if (!currentUser) {
+      alert("Please login to express interest.");
+      return;
+    }
+    if (liked) return;
+    setLiking(true);
+    try {
+      const interestRef = push(ref(db, 'inquiries'));
+      await set(interestRef, {
+        propertyId: id,
+        buyerId: currentUser.uid,
+        buyerName: currentUser.displayName || 'Anonymous User',
+        buyerEmail: currentUser.email,
+        message: `I am interested in this ${property.bhk || ''} ${property.type}.`,
+        contact: currentUser.email,
+        createdAt: new Date().toISOString(),
+        propertyTitle: property.title,
+        agentId: property.agentId || '',
+        type: 'interest'
+      });
+      setLiked(true);
+    } catch (err) {
+      console.error("Error liking property:", err);
+    } finally {
+      setLiking(false);
     }
   };
 
@@ -168,12 +202,22 @@ const PropertyDetails = () => {
                     <span className="text-xl font-medium">{property.location}</span>
                   </div>
                 </div>
-                <div className="bg-primary text-black px-8 py-4 rounded-3xl shadow-xl shadow-primary/10">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none mb-2 opacity-60">Total Investment</span>
-                  <div className="flex items-center text-3xl font-black italic">
-                    <IndianRupee size={28} />
-                    <span>{property.price.toLocaleString('en-IN')}</span>
+                <div className="flex flex-col md:flex-row items-center gap-4">
+                  <div className="bg-primary text-black px-8 py-4 rounded-3xl shadow-xl shadow-primary/10">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none mb-2 opacity-60">Total Investment</span>
+                    <div className="flex items-center text-3xl font-black italic">
+                      <IndianRupee size={28} />
+                      <span>{property.price.toLocaleString('en-IN')}</span>
+                    </div>
                   </div>
+                  <button 
+                    onClick={handleLike}
+                    disabled={liking || liked}
+                    className={`flex items-center space-x-3 px-8 py-4 rounded-3xl font-black transition-all shadow-xl h-full ${liked ? 'bg-secondary text-white' : 'bg-white border border-zinc-100 text-secondary hover:bg-zinc-50'}`}
+                  >
+                    {liking ? <Loader2 size={24} className="animate-spin" /> : <Heart size={24} fill={liked ? "currentColor" : "none"} />}
+                    <span>{liked ? 'Interested' : 'I\'m Interested'}</span>
+                  </button>
                 </div>
               </div>
 
@@ -206,6 +250,14 @@ const PropertyDetails = () => {
                     <span>For {property.purpose || 'Buy'}</span>
                   </div>
                 </div>
+                {property.bhk && (
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-zinc-400 uppercase font-black tracking-widest mb-2">BHK</span>
+                    <div className="flex items-center text-secondary font-black uppercase">
+                      <span>{property.bhk}</span>
+                    </div>
+                  </div>
+                )}
                 <div className="flex flex-col">
                   <span className="text-[10px] text-zinc-400 uppercase font-black tracking-widest mb-2">Reference</span>
                   <div className="flex items-center text-secondary font-black italic">

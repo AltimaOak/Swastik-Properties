@@ -15,7 +15,8 @@ const Properties = () => {
     purpose: '',
     minPrice: '',
     maxPrice: '',
-    searchQuery: ''
+    searchQuery: '',
+    bhk: ''
   });
   const [showFilters, setShowFilters] = useState(false);
 
@@ -66,6 +67,9 @@ const Properties = () => {
     if (filters.maxPrice) {
       results = results.filter(p => p.price <= Number(filters.maxPrice));
     }
+    if (filters.bhk) {
+      results = results.filter(p => p.bhk === filters.bhk);
+    }
 
     setFilteredProperties(results);
   }, [filters, allProperties]);
@@ -75,7 +79,7 @@ const Properties = () => {
   };
 
   const resetFilters = () => {
-    setFilters({ type: '', purpose: '', minPrice: '', maxPrice: '', searchQuery: '' });
+    setFilters({ type: '', purpose: '', minPrice: '', maxPrice: '', searchQuery: '', bhk: '' });
   };
 
   return (
@@ -174,6 +178,23 @@ const Properties = () => {
                     value={filters.maxPrice}
                     onChange={handleFilterChange}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary/50">BHK / Rooms</label>
+                  <select 
+                    name="bhk" 
+                    value={filters.bhk}
+                    onChange={handleFilterChange}
+                    className="w-full bg-white border border-zinc-200 rounded-xl p-3 text-sm text-zinc-900 focus:outline-none focus:border-secondary shadow-sm"
+                  >
+                    <option value="">All BHK</option>
+                    <option value="1 BHK">1 BHK</option>
+                    <option value="2 BHK">2 BHK</option>
+                    <option value="3 BHK">3 BHK</option>
+                    <option value="4 BHK">4 BHK</option>
+                    <option value="5+ BHK">5+ BHK</option>
+                  </select>
                 </div>
 
                 <div className="flex items-end">
