@@ -93,15 +93,6 @@ const Home = () => {
                 </button>
               </form>
             </div>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/properties">
-                <Button className="px-10 py-4 text-lg">Browse Properties</Button>
-              </Link>
-              <Link to="/contact">
-                <Button variant="secondary" className="px-10 py-4 text-lg">Connect with us</Button>
-              </Link>
-            </div>
           </motion.div>
         </div>
 
