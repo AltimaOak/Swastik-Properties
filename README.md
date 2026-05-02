@@ -1,6 +1,6 @@
-# Swastrik Properties
+# Swastik Properties
 
-Swastrik Properties is a premium real estate web application designed to provide a seamless and sophisticated experience for property management. The platform serves as a high-end marketplace connecting buyers with exclusive real estate opportunities through a modern, responsive interface.
+Swastik Properties is a premium real estate web application designed to provide a seamless and sophisticated experience for property management. The platform serves as a high-end marketplace connecting buyers with exclusive real estate opportunities through a modern, responsive interface.
 
 ## 🌐 Web Platform Features
 
@@ -20,4 +20,4 @@ The platform follows a "Minimalist-Luxury" design system:
 - **Visual Feel**: Use of glassmorphism and smooth transitions to create an immersive, high-end digital environment.
 
 ---
-Built for Swastrik Properties.
+Built for Swastik Properties.

@@ -8,7 +8,7 @@ const About = () => {
       <div className="container mx-auto px-4 md:px-6">
         {/* Hero Section */}
         <div className="text-center mb-20">
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-5xl md:text-7xl font-black text-secondary mb-6 italic"
@@ -22,7 +22,7 @@ const About = () => {
 
         {/* Mission/Vision */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-24">
-          <motion.div 
+          <motion.div
             whileHover={{ y: -5 }}
             className="bg-white p-10 rounded-[3rem] border border-zinc-100 shadow-premium"
           >
@@ -35,7 +35,7 @@ const About = () => {
             </p>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             whileHover={{ y: -5 }}
             className="bg-white p-10 rounded-[3rem] border border-zinc-100 shadow-premium"
           >
@@ -53,10 +53,9 @@ const About = () => {
         <div className="bg-white rounded-[4rem] overflow-hidden border border-zinc-100 mb-24 shadow-premium">
           <div className="grid grid-cols-1 lg:grid-cols-2">
             <div className="h-[400px] lg:h-full relative overflow-hidden">
-              <img 
-                src="logo.png" 
+              <img
+                src="logo.png"
                 alt="Founder"
-                className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-white via-transparent to-transparent hidden lg:block"></div>
             </div>
@@ -82,10 +81,15 @@ const About = () => {
 
         {/* Office Address */}
         <div className="text-center max-w-2xl mx-auto">
-          <div className="inline-flex items-center space-x-3 bg-white border border-zinc-100 px-8 py-4 rounded-full mb-8 text-secondary font-black shadow-premium">
+          <a 
+            href="https://www.google.com/maps/search/Swastik+Properties+Shop+no.4,+Unnathi+Woods,+Thane" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center space-x-3 bg-white border border-zinc-100 px-8 py-4 rounded-full mb-8 text-secondary font-black shadow-premium hover:bg-secondary hover:text-white transition-all cursor-pointer"
+          >
             <MapPin size={20} />
             <span>Visit Our Office</span>
-          </div>
+          </a>
           <h3 className="text-3xl font-black text-zinc-900 mb-4 italic">Swastik Properties Office</h3>
           <p className="text-zinc-500 text-lg font-medium">
             Shop no.4, D3, Unnathi Woods Phase 4, <br />
