@@ -18,7 +18,8 @@ import {
   ChevronRight,
   TrendingUp,
   Heart,
-  Loader2
+  Loader2,
+  X
 } from 'lucide-react';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -35,6 +36,8 @@ const PropertyDetails = () => {
   const [submitted, setSubmitted] = useState(false);
   const [liked, setLiked] = useState(false);
   const [liking, setLiking] = useState(false);
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -98,12 +101,23 @@ const PropertyDetails = () => {
     }
   };
 
-  const handleLike = async () => {
+  const handleLike = () => {
     if (!currentUser) {
       alert("Please login to express interest.");
       return;
     }
     if (liked) return;
+    setShowPhoneModal(true);
+  };
+
+  const submitInterest = async (e) => {
+    if (e) e.preventDefault();
+    
+    if (!phoneNumber || phoneNumber.length < 10) {
+      alert("Please enter a valid phone number.");
+      return;
+    }
+
     setLiking(true);
     try {
       const interestRef = push(ref(db, 'inquiries'));
@@ -112,6 +126,7 @@ const PropertyDetails = () => {
         buyerId: currentUser.uid,
         buyerName: currentUser.displayName || 'Anonymous User',
         buyerEmail: currentUser.email,
+        buyerPhone: phoneNumber,
         message: `I am interested in this ${property.bhk || ''} ${property.type}.`,
         contact: currentUser.email,
         createdAt: new Date().toISOString(),
@@ -120,6 +135,7 @@ const PropertyDetails = () => {
         type: 'interest'
       });
       setLiked(true);
+      setShowPhoneModal(false);
     } catch (err) {
       console.error("Error liking property:", err);
     } finally {
@@ -145,6 +161,7 @@ const PropertyDetails = () => {
     : ['https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=1200'];
 
   return (
+    <>
     <div className="min-h-screen pt-24 pb-20 bg-[#FDFDFD]">
       <div className="container mx-auto px-4 md:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -346,6 +363,73 @@ const PropertyDetails = () => {
         </div>
       </div>
     </div>
+
+    <AnimatePresence>
+      {showPhoneModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => !liking && setShowPhoneModal(false)}
+            className="absolute inset-0 bg-secondary/30 backdrop-blur-sm"
+          ></motion.div>
+          
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="bg-white w-full max-w-md rounded-[2.5rem] relative z-10 shadow-2xl p-8 md:p-10 border border-zinc-100"
+          >
+            <button 
+              onClick={() => setShowPhoneModal(false)} 
+              className="absolute top-6 right-6 text-zinc-300 hover:text-secondary transition-colors"
+              disabled={liking}
+            >
+              <X size={24} />
+            </button>
+
+            <div className="mb-8">
+              <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mb-6 text-secondary">
+                <Phone size={32} />
+              </div>
+              <h2 className="text-2xl font-black text-secondary italic tracking-tight">Express Interest</h2>
+              <p className="text-zinc-500 text-sm font-medium mt-2">Please provide your contact number so the agent can reach out to you with the best deal.</p>
+            </div>
+            
+            <div className="space-y-6">
+              <Input 
+                label="Phone Number"
+                type="tel"
+                placeholder="e.g. +91 98765 43210"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                autoFocus
+              />
+
+              <Button 
+                onClick={submitInterest} 
+                variant="secondary" 
+                className="w-full py-4 text-lg" 
+                disabled={liking}
+              >
+                {liking ? (
+                  <span className="flex items-center justify-center">
+                    <Loader2 className="animate-spin mr-2" size={20} />
+                    Processing...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center">
+                    Confirm Interest <CheckCircle className="ml-2" size={20} />
+                  </span>
+                )}
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+    </>
   );
 };
 

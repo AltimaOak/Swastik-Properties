@@ -15,7 +15,9 @@ import {
   TrendingUp, 
   Layout,
   UploadCloud,
-  Loader2
+  Loader2,
+  Phone,
+  CheckCircle
 } from 'lucide-react';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -132,6 +134,17 @@ const AgentDashboard = () => {
         setProperties(properties.filter(p => p.id !== id));
       } catch (err) {
         console.error(err);
+      }
+    }
+  };
+
+  const handleDeleteInquiry = async (id) => {
+    if (window.confirm("Are you sure you want to close and delete this inquiry?")) {
+      try {
+        await remove(ref(db, `inquiries/${id}`));
+        setInquiries(inquiries.filter(i => i.id !== id));
+      } catch (err) {
+        console.error("Error deleting inquiry:", err);
       }
     }
   };
@@ -274,13 +287,43 @@ const AgentDashboard = () => {
                         <span className="text-white/40 text-[10px] font-medium">{new Date(inq.createdAt).toLocaleDateString()}</span>
                       </div>
                       <h4 className="text-lg font-bold text-primary mb-1">{inq.propertyTitle}</h4>
-                      <p className="text-white/60 text-sm font-medium">Interested Buyer: <span className="text-white font-bold">{inq.buyerName || inq.buyerEmail}</span></p>
+                      <p className="text-white/60 text-sm font-medium">Interested Buyer: <span className="text-white font-bold">{inq.buyerName || inq.buyerEmail || 'User'}</span></p>
+                      {inq.buyerPhone ? (
+                        <p className="text-white/60 text-sm font-medium mt-1 flex items-center">
+                          <Phone size={14} className="mr-2 text-primary" />
+                          Phone: <span className="text-primary font-bold">{inq.buyerPhone}</span>
+                        </p>
+                      ) : (
+                        <p className="text-white/60 text-sm font-medium mt-1 flex items-center">
+                          <CheckCircle size={14} className="mr-2 text-primary" />
+                          Contact: <span className="text-white font-bold">{inq.contact}</span>
+                        </p>
+                      )}
                     </div>
                     <div className="flex flex-col md:items-end">
                       <p className="text-white/80 text-sm mb-3 italic">"{inq.message}"</p>
-                      <a href={`mailto:${inq.contact}`} className="text-[10px] font-black uppercase tracking-widest bg-white text-secondary px-6 py-2.5 rounded-xl hover:bg-primary hover:text-black transition-all">
-                        Reply via Email
-                      </a>
+                      <div className="flex flex-wrap gap-2">
+                        <a href={`mailto:${inq.contact}`} className="text-[10px] font-black uppercase tracking-widest bg-white/10 text-white px-6 py-2.5 rounded-xl hover:bg-white hover:text-secondary transition-all">
+                          Email
+                        </a>
+                        {inq.buyerPhone && (
+                          <a 
+                            href={`https://wa.me/${inq.buyerPhone.replace(/\D/g, '')}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-[10px] font-black uppercase tracking-widest bg-green-500 text-white px-6 py-2.5 rounded-xl hover:bg-green-600 transition-all"
+                          >
+                            WhatsApp
+                          </a>
+                        )}
+                        <button 
+                          onClick={() => handleDeleteInquiry(inq.id)}
+                          className="text-[10px] font-black uppercase tracking-widest bg-red-500/10 text-red-400 px-6 py-2.5 rounded-xl hover:bg-red-500 hover:text-white transition-all flex items-center"
+                        >
+                          <Trash2 size={14} className="mr-2" />
+                          Close Query
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

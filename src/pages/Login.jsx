@@ -40,7 +40,18 @@ const Login = () => {
       // Fallback: If we can't get the role or it doesn't exist, go to home
       navigate('/');
     } catch (err) {
-      setError('Invalid email or password. Please try again.');
+      console.error("Login error details:", err);
+      if (err.code === 'auth/user-not-found') {
+        setError('No account found with this email.');
+      } else if (err.code === 'auth/wrong-password') {
+        setError('Incorrect password. Please try again.');
+      } else if (err.code === 'auth/invalid-login-credentials') {
+        setError('Invalid email or password. Please try again.');
+      } else if (err.code === 'auth/too-many-requests') {
+        setError('Too many failed attempts. Please try again later.');
+      } else {
+        setError(err.message || 'Authentication failed. Please check your credentials.');
+      }
     } finally {
       setLoading(false);
     }
