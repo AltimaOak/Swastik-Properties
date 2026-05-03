@@ -42,6 +42,8 @@ const AgentDashboard = () => {
     contactNumber: '',
     bhk: '1 BHK'
   });
+  const [editingPropertyId, setEditingPropertyId] = useState(null);
+  const [existingImages, setExistingImages] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
 
   useEffect(() => {
@@ -88,43 +90,75 @@ const AgentDashboard = () => {
     setSelectedFiles([...e.target.files]);
   };
 
-  const handleAddProperty = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setUploading(true);
     try {
-      const imageUrls = [];
+      let imageUrls = [...existingImages];
       
-      // Cloudinary Upload Logic
-      for (const file of selectedFiles) {
-        try {
-          const downloadUrl = await uploadToCloudinary(file);
-          if (downloadUrl) {
-            imageUrls.push(downloadUrl);
+      // Cloudinary Upload Logic for new files
+      if (selectedFiles.length > 0) {
+        const newUrls = [];
+        for (const file of selectedFiles) {
+          try {
+            const downloadUrl = await uploadToCloudinary(file);
+            if (downloadUrl) {
+              newUrls.push(downloadUrl);
+            }
+          } catch (uploadErr) {
+            console.error(`Failed to upload ${file.name}:`, uploadErr);
+            throw new Error(`Failed to upload image ${file.name}`);
           }
-        } catch (uploadErr) {
-          console.error(`Failed to upload ${file.name}:`, uploadErr);
-          throw new Error(`Failed to upload image ${file.name}`);
         }
+        // If it's a new property, use only new images. If editing, append or replace?
+        // Let's replace for now if new ones are uploaded, to keep it simple.
+        imageUrls = newUrls;
       }
 
-      const newPropertyRef = push(ref(db, 'properties'));
-      await set(newPropertyRef, {
+      const propertyData = {
         ...formData,
         price: Number(formData.price),
         images: imageUrls,
         agentId: currentUser.uid,
-        createdAt: new Date().toISOString()
-      });
+        updatedAt: new Date().toISOString()
+      };
+
+      if (editingPropertyId) {
+        await set(ref(db, `properties/${editingPropertyId}`), propertyData);
+      } else {
+        const newPropertyRef = push(ref(db, 'properties'));
+        await set(newPropertyRef, {
+          ...propertyData,
+          createdAt: new Date().toISOString()
+        });
+      }
 
       setShowAddModal(false);
       resetForm();
       fetchAgentProperties();
     } catch (err) {
       console.error(err);
-      alert("Error adding property: " + err.message);
+      alert("Error saving property: " + err.message);
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleEditClick = (property) => {
+    setFormData({
+      title: property.title,
+      price: property.price,
+      location: property.location,
+      type: property.type,
+      purpose: property.purpose || 'Buy',
+      description: property.description,
+      size: property.size,
+      contactNumber: property.contactNumber || '',
+      bhk: property.bhk || '1 BHK'
+    });
+    setEditingPropertyId(property.id);
+    setExistingImages(property.images || []);
+    setShowAddModal(true);
   };
 
   const handleDelete = async (id) => {
@@ -152,6 +186,8 @@ const AgentDashboard = () => {
   const resetForm = () => {
     setFormData({ title: '', price: '', location: '', type: 'Flat', purpose: 'Buy', description: '', size: '', contactNumber: '', bhk: '1 BHK' });
     setSelectedFiles([]);
+    setEditingPropertyId(null);
+    setExistingImages([]);
   };
 
   return (
@@ -177,7 +213,7 @@ const AgentDashboard = () => {
           </div>
 
           <button 
-            onClick={() => setShowAddModal(true)}
+            onClick={() => { resetForm(); setShowAddModal(true); }}
             className="bg-secondary p-8 rounded-[2.5rem] shadow-xl shadow-secondary/20 relative overflow-hidden group text-left sm:col-span-2 lg:col-span-1"
           >
             <div className="absolute top-0 right-0 p-6 text-white/10 -mr-2 -mt-2 group-hover:scale-110 transition-transform">
@@ -223,7 +259,10 @@ const AgentDashboard = () => {
                       {p.type}
                     </span>
                     <div className="flex space-x-2">
-                      <button className="p-3 bg-white border border-zinc-100 text-secondary rounded-xl hover:bg-secondary hover:text-white transition-all shadow-sm">
+                      <button 
+                        onClick={() => handleEditClick(p)}
+                        className="p-3 bg-white border border-zinc-100 text-secondary rounded-xl hover:bg-secondary hover:text-white transition-all shadow-sm"
+                      >
                         <Edit3 size={18} />
                       </button>
                       <button 
@@ -245,7 +284,7 @@ const AgentDashboard = () => {
               <h3 className="text-2xl font-black text-secondary mb-2">No Active Listings</h3>
               <p className="text-zinc-500 font-medium">Start growing your portfolio today.</p>
               <button 
-                onClick={() => setShowAddModal(true)}
+                onClick={() => { resetForm(); setShowAddModal(true); }}
                 className="mt-8 bg-secondary text-white px-10 py-4 rounded-2xl font-black hover:bg-red-900 transition-all shadow-xl shadow-secondary/20"
               >
                 List Your First Property
@@ -345,7 +384,7 @@ const AgentDashboard = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => !uploading && setShowAddModal(false)}
+              onClick={() => !uploading && (resetForm(), setShowAddModal(false))}
               className="absolute inset-0 bg-secondary/20 backdrop-blur-md"
             ></motion.div>
             
@@ -356,14 +395,16 @@ const AgentDashboard = () => {
               className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[3.5rem] relative z-10 shadow-2xl p-8 md:p-14 border border-zinc-100"
             >
               {!uploading && (
-                <button onClick={() => setShowAddModal(false)} className="absolute top-10 right-10 text-zinc-300 hover:text-secondary transition-colors">
+                <button onClick={() => { resetForm(); setShowAddModal(false); }} className="absolute top-10 right-10 text-zinc-300 hover:text-secondary transition-colors">
                   <X size={40} />
                 </button>
               )}
 
-              <h2 className="text-4xl font-black text-secondary mb-10 italic tracking-tighter">Publish New Listing</h2>
+              <h2 className="text-4xl font-black text-secondary mb-10 italic tracking-tighter">
+                {editingPropertyId ? 'Update Listing' : 'Publish New Listing'}
+              </h2>
               
-              <form onSubmit={handleAddProperty} className="space-y-10">
+              <form onSubmit={handleSubmit} className="space-y-10">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <Input 
                     label="Property Title"
@@ -455,6 +496,19 @@ const AgentDashboard = () => {
 
                 <div className="space-y-4">
                   <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Media Upload</label>
+                  {editingPropertyId && existingImages.length > 0 && selectedFiles.length === 0 && (
+                    <div className="flex flex-wrap gap-3 mb-4">
+                      {existingImages.map((img, i) => (
+                        <div key={i} className="relative group">
+                          <img src={img} className="w-20 h-20 object-cover rounded-xl border border-zinc-200" alt="" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+                            <Check size={20} className="text-white" />
+                          </div>
+                        </div>
+                      ))}
+                      <p className="w-full text-zinc-400 text-[10px] font-black uppercase tracking-widest mt-2 italic">Using existing photos. Upload new ones to replace.</p>
+                    </div>
+                  )}
                   <div className="border-4 border-dashed border-zinc-100 rounded-[3rem] p-16 text-center hover:border-primary/50 transition-all group relative cursor-pointer bg-zinc-50/50">
                     <input 
                       type="file" 
@@ -481,14 +535,23 @@ const AgentDashboard = () => {
                   </div>
                 </div>
 
-                <div className="pt-6">
+                <div className="pt-6 flex flex-col md:flex-row gap-4">
+                  <Button 
+                    type="button" 
+                    variant="white" 
+                    className="w-full md:w-1/3 py-6 text-xl border border-zinc-200" 
+                    onClick={() => { resetForm(); setShowAddModal(false); }}
+                    disabled={uploading}
+                  >
+                    Cancel
+                  </Button>
                   <Button type="submit" variant="secondary" className="w-full py-6 text-xl shadow-2xl shadow-secondary/20" disabled={uploading}>
                     {uploading ? (
                       <span className="flex items-center justify-center">
                         <Loader2 className="animate-spin mr-4" size={24} />
-                        Publishing to Swastik...
+                        {editingPropertyId ? 'Updating Swastik...' : 'Publishing to Swastik...'}
                       </span>
-                    ) : 'Confirm & Publish Listing'}
+                    ) : (editingPropertyId ? 'Confirm & Update Listing' : 'Confirm & Publish Listing')}
                   </Button>
                 </div>
               </form>
