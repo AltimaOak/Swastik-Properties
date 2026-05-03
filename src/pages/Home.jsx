@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, MapPin, Shield, Star, Users, ArrowRight } from 'lucide-react';
+import { Search, MapPin, Shield, Star, Users, ArrowRight, CheckCircle } from 'lucide-react';
 import PropertyCard from '../components/PropertyCard';
 import Button from '../components/Button';
 import { ref, query, orderByChild, limitToLast, get } from 'firebase/database';
@@ -190,12 +190,19 @@ const Home = () => {
                   ))}
                 </div>
               </div>
-              <div className="hidden lg:block">
-                <img
-                  src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=800"
-                  alt="Modern House"
-                  className="rounded-3xl shadow-premium rotate-2 border-8 border-white"
-                />
+              <div className="flex flex-col items-center justify-center space-y-6">
+                <div className="bg-white p-10 rounded-[3rem] shadow-premium border border-zinc-100 flex flex-col items-center text-center space-y-6 max-w-sm mx-auto">
+                  <div className="w-24 h-24 bg-green-500 rounded-[2rem] flex items-center justify-center text-white shadow-2xl shadow-green-100 animate-float">
+                    <CheckCircle size={48} />
+                  </div>
+                  <div>
+                    <h3 className="text-secondary font-black text-3xl italic tracking-tighter mb-2">100% Trusted</h3>
+                    <p className="text-zinc-400 text-xs font-black uppercase tracking-[0.3em]">Verified Agency</p>
+                  </div>
+                  <div className="pt-6 border-t border-zinc-100 w-full">
+                    <p className="text-zinc-500 text-sm font-medium italic">"Your trust is our greatest asset. We ensure every deal is transparent and secure."</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
