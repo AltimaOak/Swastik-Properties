@@ -19,7 +19,10 @@ import {
   TrendingUp,
   Heart,
   Loader2,
-  X
+  X,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw
 } from 'lucide-react';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -38,6 +41,8 @@ const PropertyDetails = () => {
   const [liking, setLiking] = useState(false);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [showZoomModal, setShowZoomModal] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -178,7 +183,8 @@ const PropertyDetails = () => {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.5 }}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover cursor-zoom-in"
+                  onClick={() => setShowZoomModal(true)}
                 />
               </AnimatePresence>
               
@@ -207,6 +213,13 @@ const PropertyDetails = () => {
                   </div>
                 </>
               )}
+
+              <button 
+                onClick={() => setShowZoomModal(true)}
+                className="absolute top-6 right-6 w-12 h-12 bg-white/90 backdrop-blur-md text-secondary rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl hover:bg-secondary hover:text-white"
+              >
+                <Maximize size={20} />
+              </button>
             </div>
 
             {/* Title & Stats */}
@@ -425,6 +438,88 @@ const PropertyDetails = () => {
                 )}
               </Button>
             </div>
+          </motion.div>
+        </div>
+      )}
+      {showZoomModal && (
+        <div className="fixed inset-0 z-[110] flex flex-col items-center justify-center bg-black/95 backdrop-blur-xl p-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="relative w-full h-full flex items-center justify-center overflow-hidden"
+          >
+            <motion.img 
+              src={images[currentImageIndex]}
+              alt="Property Zoom"
+              style={{ scale: zoomScale }}
+              className="max-w-full max-h-full object-contain transition-transform duration-200"
+              drag
+              dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+              dragElastic={0.5}
+            />
+            
+            {/* Zoom Controls */}
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center space-x-4 bg-white/10 backdrop-blur-md p-4 rounded-[2rem] border border-white/10">
+              <button 
+                onClick={() => setZoomScale(prev => Math.max(0.5, prev - 0.5))}
+                className="w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-all"
+                title="Zoom Out"
+              >
+                <ZoomOut size={24} />
+              </button>
+              <div className="text-white font-black px-4 min-w-[80px] text-center">
+                {Math.round(zoomScale * 100)}%
+              </div>
+              <button 
+                onClick={() => setZoomScale(prev => Math.min(5, prev + 0.5))}
+                className="w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-all"
+                title="Zoom In"
+              >
+                <ZoomIn size={24} />
+              </button>
+              <button 
+                onClick={() => setZoomScale(1)}
+                className="w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-all"
+                title="Reset Zoom"
+              >
+                <RotateCcw size={20} />
+              </button>
+            </div>
+
+            {/* Navigation in Zoom Modal */}
+            {images.length > 1 && (
+              <>
+                <button 
+                  onClick={() => {
+                    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+                    setZoomScale(1);
+                  }}
+                  className="absolute left-6 top-1/2 -translate-y-1/2 w-16 h-16 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-all"
+                >
+                  <ChevronLeft size={32} />
+                </button>
+                <button 
+                  onClick={() => {
+                    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+                    setZoomScale(1);
+                  }}
+                  className="absolute right-6 top-1/2 -translate-y-1/2 w-16 h-16 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-all"
+                >
+                  <ChevronRight size={32} />
+                </button>
+              </>
+            )}
+
+            <button 
+              onClick={() => {
+                setShowZoomModal(false);
+                setZoomScale(1);
+              }}
+              className="absolute top-10 right-10 w-16 h-16 bg-white/10 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-all"
+            >
+              <X size={32} />
+            </button>
           </motion.div>
         </div>
       )}
