@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin } from 'lucide-react';
-import { FaInstagram } from 'react-icons/fa';
+import { FaInstagram, FaYoutube } from 'react-icons/fa';
 
 const Footer = () => {
   return (
@@ -19,6 +19,9 @@ const Footer = () => {
             <div className="flex space-x-4">
               <a href="https://www.instagram.com/swastikproperties111?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-black transition-all duration-300">
                 <FaInstagram size={18} />
+              </a>
+              <a href="https://www.youtube.com/@Swastikproperties111" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-red-600 transition-all duration-300">
+                <FaYoutube size={18} />
               </a>
             </div>
           </div>
@@ -64,6 +67,10 @@ const Footer = () => {
                   <Mail size={20} className="text-primary shrink-0 pointer-events-none" />
                   <span>swastik_prop@rediffmail.com</span>
                 </a>
+                
+              </li>
+              <li>
+                <span> MAHARERA REG.NO. A031332601288 </span>
               </li>
             </ul>
           </div>
