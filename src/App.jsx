@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
 import ScrollToTop from './components/ScrollToTop';
+import { Analytics } from '@vercel/analytics/react';
 
 // Pages
 import Home from './pages/Home';
@@ -58,6 +59,7 @@ function App() {
           <FloatingWhatsApp />
         </div>
       </Router>
+      <Analytics />
     </AuthProvider>
   );
 }
