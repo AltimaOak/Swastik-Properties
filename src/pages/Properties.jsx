@@ -14,7 +14,7 @@ const Properties = () => {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     type: '',
-    purpose: '',
+    purpose: searchParams.get('purpose') || '',
     minPrice: '',
     maxPrice: '',
     searchQuery: searchParams.get('search') || '',
@@ -95,6 +95,33 @@ const Properties = () => {
 
         {/* Search & Filter Bar */}
         <div className="flex flex-col lg:flex-row gap-4 mb-12">
+          {/* Buy/Rent Sliding Tabs */}
+          <div className="flex bg-zinc-100 p-1.5 rounded-2xl border border-zinc-200/50 w-full lg:w-auto relative shadow-inner">
+            {[
+              { label: 'All', value: '' },
+              { label: 'Buy', value: 'Buy' },
+              { label: 'Rent', value: 'Rent' }
+            ].map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setFilters(prev => ({ ...prev, purpose: option.value }))}
+                className="flex-1 py-3 px-6 rounded-xl text-sm font-black transition-colors duration-300 relative z-10 cursor-pointer"
+                style={{
+                  color: filters.purpose === option.value ? '#FFFFFF' : '#71717A'
+                }}
+              >
+                {option.label}
+                {filters.purpose === option.value && (
+                  <motion.div
+                    layoutId="activeTabIndicator"
+                    className="absolute inset-0 bg-secondary rounded-xl -z-10 shadow-lg shadow-secondary/20"
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+
           <div className="relative flex-grow">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={20} />
             <input 
