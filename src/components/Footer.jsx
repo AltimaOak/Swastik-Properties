@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin } from 'lucide-react';
-import { FaInstagram, FaYoutube } from 'react-icons/fa';
+import { FaInstagram, FaYoutube, FaFacebook } from 'react-icons/fa';
 
 const Footer = () => {
   return (
@@ -22,6 +22,9 @@ const Footer = () => {
               </a>
               <a href="https://www.youtube.com/@Swastikproperties111" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-red-600 transition-all duration-300">
                 <FaYoutube size={18} />
+              </a>
+              <a href="https://www.facebook.com/p/Swastik-Properties-100091765504804/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-blue-600 transition-all duration-300">
+                <FaFacebook size={18} />
               </a>
             </div>
           </div>
