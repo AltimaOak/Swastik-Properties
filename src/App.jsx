@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { AnimatePresence } from 'framer-motion';
+import Preloader from './components/Preloader';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
@@ -21,8 +23,21 @@ import BuyerDashboard from './pages/BuyerDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1800);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <AuthProvider>
+      <AnimatePresence mode="wait">
+        {isLoading && <Preloader key="preloader" />}
+      </AnimatePresence>
       <Router>
         <ScrollToTop />
         <div className="flex flex-col min-h-screen bg-black text-white selection:bg-primary selection:text-black">
