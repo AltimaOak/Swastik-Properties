@@ -6,7 +6,7 @@ import { ref, set } from 'firebase/database';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import { motion } from 'framer-motion';
-import { UserPlus, User, Mail, Lock, AlertCircle } from 'lucide-react';
+import { UserPlus, User, Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -15,6 +15,7 @@ const Signup = () => {
     password: '',
     role: 'buyer' // default role
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -109,13 +110,21 @@ const Signup = () => {
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
                 <Input 
                   name="password"
-                  type="password" 
+                  type={showPassword ? 'text' : 'password'} 
                   placeholder="Password" 
                   value={formData.password}
                   onChange={handleChange}
-                  className="pl-12"
+                  className="pl-12 pr-12"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-secondary transition-colors focus:outline-none cursor-pointer"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 

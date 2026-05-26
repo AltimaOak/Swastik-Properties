@@ -6,11 +6,12 @@ import { ref, get, child } from 'firebase/database';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import { motion } from 'framer-motion';
-import { LogIn, Lock, Mail, AlertCircle } from 'lucide-react';
+import { LogIn, Lock, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -101,13 +102,21 @@ const Login = () => {
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
                 <Input 
-                  type="password" 
+                  type={showPassword ? 'text' : 'password'} 
                   placeholder="Password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-12"
+                  className="pl-12 pr-12"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-secondary transition-colors focus:outline-none cursor-pointer"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 
