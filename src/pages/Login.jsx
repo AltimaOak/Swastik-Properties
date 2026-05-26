@@ -125,7 +125,7 @@ const Login = () => {
                 <input type="checkbox" className="rounded border-zinc-300 bg-white text-secondary focus:ring-secondary" />
                 <span>Remember</span>
               </label>
-              <Link to="/forgot-password" title="Coming Soon">Forgot Password?</Link>
+              <Link to="/forgot-password">Forgot Password?</Link>
             </div>
 
             <Button type="submit" variant="secondary" className="w-full py-5 text-lg shadow-xl shadow-secondary/20" disabled={loading}>
