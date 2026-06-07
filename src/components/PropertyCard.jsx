@@ -18,7 +18,13 @@ const PropertyCard = ({ property }) => {
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
 
-  const mainImage = images && images.length > 0 ? images[0] : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=800';
+  const imageList = Array.isArray(images) 
+    ? images 
+    : (typeof images === 'string' && images.trim() !== '') 
+      ? [images] 
+      : [];
+
+  const mainImage = imageList.length > 0 ? imageList[0] : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=800';
 
   const handleLike = (e) => {
     e.preventDefault();

@@ -161,8 +161,14 @@ const PropertyDetails = () => {
     </div>
   );
 
-  const images = property.images && property.images.length > 0 
+  const imageList = Array.isArray(property.images) 
     ? property.images 
+    : (typeof property.images === 'string' && property.images.trim() !== '') 
+      ? [property.images] 
+      : [];
+
+  const images = imageList.length > 0 
+    ? imageList 
     : ['https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=1200'];
 
   return (

@@ -1,0 +1,29 @@
+{
+  "rules": {
+    "properties": {
+      ".read": "true",
+      "$propertyId": {
+        ".write": "auth !== null && (!data.exists() || data.child('agentId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'agent')"
+      }
+    },
+    "users": {
+      "$uid": {
+        ".read": "auth !== null",
+        ".write": "auth !== null && auth.uid === $uid"
+      }
+    },
+    "inquiries": {
+      ".read": "auth !== null && root.child('users').child(auth.uid).child('role').val() === 'agent'",
+      "$inquiryId": {
+        ".read": "auth !== null && (data.child('buyerId').val() === auth.uid || data.child('agentId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'agent')",
+        ".write": "auth !== null"
+      }
+    },
+    "contact_messages": {
+      "$messageId": {
+        ".read": "auth !== null && root.child('users').child(auth.uid).child('role').val() === 'agent'",
+        ".write": "true"
+      }
+    }
+  }
+}

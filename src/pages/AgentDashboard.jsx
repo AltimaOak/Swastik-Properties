@@ -241,19 +241,26 @@ const AgentDashboard = () => {
             </div>
           ) : properties.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {properties.map(p => (
-                <div key={p.id} className="group bg-zinc-50 border border-zinc-100 p-5 rounded-[2rem] hover:bg-white hover:shadow-premium transition-all">
-                  <div className="flex space-x-5">
-                    <img src={p.images?.[0] || 'https://via.placeholder.com/80'} className="w-24 h-24 rounded-2xl object-cover shadow-md" alt="" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-secondary font-black truncate text-lg mb-1">{p.title}</p>
-                      <p className="text-zinc-500 text-xs font-bold mb-2 flex items-center">
-                        <ImageIcon size={12} className="mr-1" /> {p.images?.length || 0} Photos
-                      </p>
-                      <p className="text-secondary font-black text-sm italic">₹{p.price.toLocaleString('en-IN')}</p>
-                      {p.bhk && <p className="text-zinc-400 text-[10px] font-black uppercase tracking-widest mt-1">{p.bhk}</p>}
+              {properties.map(p => {
+                const imgList = Array.isArray(p.images)
+                  ? p.images
+                  : (typeof p.images === 'string' && p.images.trim() !== '')
+                    ? [p.images]
+                    : [];
+                const displayImg = imgList.length > 0 ? imgList[0] : 'https://via.placeholder.com/80';
+                return (
+                  <div key={p.id} className="group bg-zinc-50 border border-zinc-100 p-5 rounded-[2rem] hover:bg-white hover:shadow-premium transition-all">
+                    <div className="flex space-x-5">
+                      <img src={displayImg} className="w-24 h-24 rounded-2xl object-cover shadow-md" alt="" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-secondary font-black truncate text-lg mb-1">{p.title}</p>
+                        <p className="text-zinc-500 text-xs font-bold mb-2 flex items-center">
+                          <ImageIcon size={12} className="mr-1" /> {imgList.length} Photos
+                        </p>
+                        <p className="text-secondary font-black text-sm italic">₹{p.price.toLocaleString('en-IN')}</p>
+                        {p.bhk && <p className="text-zinc-400 text-[10px] font-black uppercase tracking-widest mt-1">{p.bhk}</p>}
+                      </div>
                     </div>
-                  </div>
                   <div className="mt-6 flex items-center justify-between">
                     <span className="text-[10px] bg-white border border-zinc-200 text-secondary px-4 py-1.5 rounded-full font-black uppercase tracking-widest">
                       {p.type}
@@ -274,7 +281,8 @@ const AgentDashboard = () => {
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+            })}
             </div>
           ) : (
             <div className="py-24 text-center bg-zinc-50 rounded-[3rem] border border-dashed border-zinc-200">
