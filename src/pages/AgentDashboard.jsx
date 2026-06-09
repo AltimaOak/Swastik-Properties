@@ -40,7 +40,10 @@ const AgentDashboard = () => {
     description: '',
     size: '',
     contactNumber: '',
-    bhk: '1 BHK'
+    bhk: '1 BHK',
+    underConstruction: false,
+    builderName: '',
+    mahareraNo: ''
   });
   const [editingPropertyId, setEditingPropertyId] = useState(null);
   const [existingImages, setExistingImages] = useState([]);
@@ -92,6 +95,22 @@ const AgentDashboard = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (formData.underConstruction) {
+      if (!Array.isArray(formData.bhk) || formData.bhk.length === 0) {
+        alert("Please select at least one BHK / Room configuration.");
+        return;
+      }
+      if (!formData.builderName.trim()) {
+        alert("Please enter the Builder Name.");
+        return;
+      }
+      if (!formData.mahareraNo.trim()) {
+        alert("Please enter the MahaRERA Number.");
+        return;
+      }
+    }
+
     setUploading(true);
     try {
       let imageUrls = [...existingImages];
@@ -154,7 +173,10 @@ const AgentDashboard = () => {
       description: property.description,
       size: property.size,
       contactNumber: property.contactNumber || '',
-      bhk: property.bhk || '1 BHK'
+      bhk: property.bhk || '1 BHK',
+      underConstruction: property.underConstruction || false,
+      builderName: property.builderName || '',
+      mahareraNo: property.mahareraNo || ''
     });
     setEditingPropertyId(property.id);
     setExistingImages(property.images || []);
@@ -184,7 +206,20 @@ const AgentDashboard = () => {
   };
 
   const resetForm = () => {
-    setFormData({ title: '', price: '', location: '', type: 'Flat', purpose: 'Buy', description: '', size: '', contactNumber: '', bhk: '1 BHK' });
+    setFormData({ 
+      title: '', 
+      price: '', 
+      location: '', 
+      type: 'Flat', 
+      purpose: 'Buy', 
+      description: '', 
+      size: '', 
+      contactNumber: '', 
+      bhk: '1 BHK',
+      underConstruction: false,
+      builderName: '',
+      mahareraNo: ''
+    });
     setSelectedFiles([]);
     setEditingPropertyId(null);
     setExistingImages([]);
@@ -471,23 +506,105 @@ const AgentDashboard = () => {
                     onChange={(e) => setFormData({...formData, size: e.target.value})}
                     required
                   />
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">BHK / Rooms</label>
-                    <select 
-                      className="w-full bg-zinc-50 border border-zinc-200 text-secondary px-4 py-3.5 rounded-2xl focus:outline-none focus:border-secondary shadow-sm font-bold"
-                      value={formData.bhk}
-                      onChange={(e) => setFormData({...formData, bhk: e.target.value})}
-                    >
-                      <option value="1 BHK">1 BHK</option>
-                      <option value="2 BHK">2 BHK</option>
-                      <option value="3 BHK">3 BHK</option>
-                      <option value="4 BHK">4 BHK</option>
-                      <option value="5+ BHK">5+ BHK</option>
-                      <option value="Shop">Shop/Commercial</option>
-                      <option value="Office">Office Space</option>
-                      <option value="Land">Plot/Land</option>
-                    </select>
+                  <div className="flex flex-col justify-center space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Project Status</label>
+                    <div className="flex items-center space-x-3 p-3.5 bg-zinc-50 border border-zinc-200 rounded-2xl cursor-pointer select-none hover:border-secondary transition-all h-[54px]">
+                      <input 
+                        type="checkbox"
+                        id="underConstruction"
+                        checked={formData.underConstruction || false}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setFormData({
+                            ...formData,
+                            underConstruction: checked,
+                            bhk: checked ? [] : '1 BHK',
+                            builderName: checked ? formData.builderName : '',
+                            mahareraNo: checked ? formData.mahareraNo : ''
+                          });
+                        }}
+                        className="w-5 h-5 rounded border-zinc-300 text-secondary focus:ring-secondary cursor-pointer"
+                      />
+                      <label htmlFor="underConstruction" className="text-sm font-bold text-secondary cursor-pointer flex-1">
+                        Under Construction Project
+                      </label>
+                    </div>
                   </div>
+
+                  {!formData.underConstruction ? (
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">BHK / Rooms</label>
+                      <select 
+                        className="w-full bg-zinc-50 border border-zinc-200 text-secondary px-4 py-3.5 rounded-2xl focus:outline-none focus:border-secondary shadow-sm font-bold"
+                        value={formData.bhk}
+                        onChange={(e) => setFormData({...formData, bhk: e.target.value})}
+                      >
+                        <option value="1 BHK">1 BHK</option>
+                        <option value="2 BHK">2 BHK</option>
+                        <option value="3 BHK">3 BHK</option>
+                        <option value="4 BHK">4 BHK</option>
+                        <option value="5+ BHK">5+ BHK</option>
+                        <option value="Shop">Shop/Commercial</option>
+                        <option value="Office">Office Space</option>
+                        <option value="Land">Plot/Land</option>
+                      </select>
+                    </div>
+                  ) : (
+                    <>
+                      <Input 
+                        label="Builder Name"
+                        placeholder="e.g. Hiranandani Group"
+                        value={formData.builderName}
+                        onChange={(e) => setFormData({...formData, builderName: e.target.value})}
+                        required
+                      />
+                      <Input 
+                        label="MahaRERA Number"
+                        placeholder="e.g. P517000XXXXX"
+                        value={formData.mahareraNo}
+                        onChange={(e) => setFormData({...formData, mahareraNo: e.target.value})}
+                        required
+                      />
+                      <div className="col-span-1 md:col-span-2 space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">BHK / Rooms Configuration (Select all that apply)</label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-zinc-50 p-6 rounded-3xl border border-zinc-200">
+                          {[
+                            { label: '1 BHK', value: '1 BHK' },
+                            { label: '2 BHK', value: '2 BHK' },
+                            { label: '3 BHK', value: '3 BHK' },
+                            { label: '4 BHK', value: '4 BHK' },
+                            { label: '5+ BHK', value: '5+ BHK' },
+                            { label: 'Shop/Commercial', value: 'Shop' },
+                            { label: 'Office Space', value: 'Office' },
+                            { label: 'Plot/Land', value: 'Land' }
+                          ].map((opt) => {
+                            const isChecked = Array.isArray(formData.bhk) ? formData.bhk.includes(opt.value) : formData.bhk === opt.value;
+                            return (
+                              <label key={opt.value} className="flex items-center space-x-3 p-3.5 bg-white border border-zinc-200 rounded-2xl cursor-pointer hover:border-secondary transition-all select-none">
+                                <input 
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={(e) => {
+                                    let newBhk = Array.isArray(formData.bhk) ? [...formData.bhk] : [];
+                                    if (e.target.checked) {
+                                      if (!newBhk.includes(opt.value)) {
+                                        newBhk.push(opt.value);
+                                      }
+                                    } else {
+                                      newBhk = newBhk.filter(item => item !== opt.value);
+                                    }
+                                    setFormData({ ...formData, bhk: newBhk });
+                                  }}
+                                  className="w-5 h-5 rounded border-zinc-300 text-secondary focus:ring-secondary cursor-pointer"
+                                />
+                                <span className="text-sm font-bold text-secondary">{opt.label}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="space-y-2">

@@ -70,7 +70,13 @@ const Properties = () => {
       results = results.filter(p => p.price <= Number(filters.maxPrice));
     }
     if (filters.bhk) {
-      results = results.filter(p => p.bhk === filters.bhk);
+      results = results.filter(p => {
+        if (!p.bhk) return false;
+        if (Array.isArray(p.bhk)) {
+          return p.bhk.includes(filters.bhk);
+        }
+        return p.bhk === filters.bhk;
+      });
     }
 
     setFilteredProperties(results);
