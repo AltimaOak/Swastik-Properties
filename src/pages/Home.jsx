@@ -68,9 +68,12 @@ const Home = () => {
             transition={{ duration: 0.8 }}
           >
             <span className="text-secondary font-black uppercase tracking-[0.3em] text-sm mb-4 block">Premium Real Estate</span>
-            <h1 className="text-5xl md:text-8xl font-black text-secondary mb-6 tracking-tighter leading-tight drop-shadow-sm">
+            <h1 className="text-5xl md:text-8xl font-black text-secondary mb-4 tracking-tighter leading-tight drop-shadow-sm">
               SWASTIK <span className="text-primary italic">PROPERTIES</span>
             </h1>
+            <div className="inline-block bg-secondary/10 border border-secondary/20 text-secondary px-5 py-2 rounded-full text-xs font-black tracking-widest uppercase mb-6">
+              MahaRERA Reg. No. A031332601288
+            </div>
             <p className="text-xl md:text-2xl text-zinc-800 mb-10 max-w-2xl mx-auto font-bold italic">
               Buy | Sell | Rent — Your journey to the perfect property starts here with trust and elegance.
             </p>
