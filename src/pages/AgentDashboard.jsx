@@ -477,6 +477,7 @@ const AgentDashboard = () => {
                           <option value="Shop">Shop</option>
                           <option value="House">House</option>
                           <option value="Land">Land</option>
+                          <option value="project">under constructuion</option>
                         </select>
                       </div>
                       <div className="space-y-2">
