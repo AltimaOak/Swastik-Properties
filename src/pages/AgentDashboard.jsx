@@ -17,7 +17,8 @@ import {
   UploadCloud,
   Loader2,
   Phone,
-  CheckCircle
+  CheckCircle,
+  Video
 } from 'lucide-react';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -47,7 +48,9 @@ const AgentDashboard = () => {
   });
   const [editingPropertyId, setEditingPropertyId] = useState(null);
   const [existingImages, setExistingImages] = useState([]);
-  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [existingVideos, setExistingVideos] = useState([]);
+  const [selectedImageFiles, setSelectedImageFiles] = useState([]);
+  const [selectedVideoFiles, setSelectedVideoFiles] = useState([]);
 
   useEffect(() => {
     if (currentUser) {
@@ -89,8 +92,12 @@ const AgentDashboard = () => {
     }
   };
 
-  const handleFileSelect = (e) => {
-    setSelectedFiles([...e.target.files]);
+  const handleImageFileSelect = (e) => {
+    setSelectedImageFiles([...e.target.files]);
+  };
+
+  const handleVideoFileSelect = (e) => {
+    setSelectedVideoFiles([...e.target.files]);
   };
 
   const handleSubmit = async (e) => {
@@ -114,30 +121,47 @@ const AgentDashboard = () => {
     setUploading(true);
     try {
       let imageUrls = [...existingImages];
+      let videoUrls = [...existingVideos];
       
-      // Cloudinary Upload Logic for new files
-      if (selectedFiles.length > 0) {
-        const newUrls = [];
-        for (const file of selectedFiles) {
+      // Cloudinary Upload Logic for new images
+      if (selectedImageFiles.length > 0) {
+        const newImageUrls = [];
+        for (const file of selectedImageFiles) {
           try {
             const downloadUrl = await uploadToCloudinary(file);
             if (downloadUrl) {
-              newUrls.push(downloadUrl);
+              newImageUrls.push(downloadUrl);
             }
           } catch (uploadErr) {
-            console.error(`Failed to upload ${file.name}:`, uploadErr);
+            console.error(`Failed to upload image ${file.name}:`, uploadErr);
             throw new Error(`Failed to upload image ${file.name}`);
           }
         }
-        // If it's a new property, use only new images. If editing, append or replace?
-        // Let's replace for now if new ones are uploaded, to keep it simple.
-        imageUrls = newUrls;
+        imageUrls = newImageUrls;
+      }
+
+      // Cloudinary Upload Logic for new videos
+      if (selectedVideoFiles.length > 0) {
+        const newVideoUrls = [];
+        for (const file of selectedVideoFiles) {
+          try {
+            const downloadUrl = await uploadToCloudinary(file);
+            if (downloadUrl) {
+              newVideoUrls.push(downloadUrl);
+            }
+          } catch (uploadErr) {
+            console.error(`Failed to upload video ${file.name}:`, uploadErr);
+            throw new Error(`Failed to upload video ${file.name}`);
+          }
+        }
+        videoUrls = newVideoUrls;
       }
 
       const propertyData = {
         ...formData,
         price: Number(formData.price),
         images: imageUrls,
+        videos: videoUrls,
         agentId: currentUser.uid,
         updatedAt: new Date().toISOString()
       };
@@ -180,6 +204,7 @@ const AgentDashboard = () => {
     });
     setEditingPropertyId(property.id);
     setExistingImages(property.images || []);
+    setExistingVideos(property.videos || []);
     setShowAddModal(true);
   };
 
@@ -220,9 +245,11 @@ const AgentDashboard = () => {
       builderName: '',
       mahareraNo: ''
     });
-    setSelectedFiles([]);
+    setSelectedImageFiles([]);
+    setSelectedVideoFiles([]);
     setEditingPropertyId(null);
     setExistingImages([]);
+    setExistingVideos([]);
   };
 
   return (
@@ -282,16 +309,36 @@ const AgentDashboard = () => {
                   : (typeof p.images === 'string' && p.images.trim() !== '')
                     ? [p.images]
                     : [];
-                const displayImg = imgList.length > 0 ? imgList[0] : 'https://via.placeholder.com/80';
+                const vidList = Array.isArray(p.videos)
+                  ? p.videos
+                  : (typeof p.videos === 'string' && p.videos.trim() !== '')
+                    ? [p.videos]
+                    : [];
+                const displayImg = imgList.length > 0 ? imgList[0] : null;
+                const displayVid = !displayImg && vidList.length > 0 ? vidList[0] : null;
                 return (
                   <div key={p.id} className="group bg-zinc-50 border border-zinc-100 p-5 rounded-[2rem] hover:bg-white hover:shadow-premium transition-all">
                     <div className="flex space-x-5">
-                      <img src={displayImg} className="w-24 h-24 rounded-2xl object-cover shadow-md" alt="" />
+                      {displayImg ? (
+                        <img src={displayImg} className="w-24 h-24 rounded-2xl object-cover shadow-md" alt="" />
+                      ) : displayVid ? (
+                        <div className="w-24 h-24 rounded-2xl bg-black shadow-md relative overflow-hidden flex items-center justify-center">
+                          <video src={displayVid} className="w-full h-full object-cover opacity-80 animate-pulse" muted />
+                          <div className="absolute inset-0 flex items-center justify-center text-white bg-black/20">
+                            <Video size={18} />
+                          </div>
+                        </div>
+                      ) : (
+                        <img src="https://via.placeholder.com/80" className="w-24 h-24 rounded-2xl object-cover shadow-md" alt="" />
+                      )}
                       <div className="flex-1 min-w-0">
                         <p className="text-secondary font-black truncate text-lg mb-1">{p.title}</p>
-                        <p className="text-zinc-500 text-xs font-bold mb-2 flex items-center">
-                          <ImageIcon size={12} className="mr-1" /> {imgList.length} Photos
-                        </p>
+                        <div className="text-zinc-500 text-xs font-bold mb-2 flex items-center space-x-3">
+                          <span className="flex items-center"><ImageIcon size={12} className="mr-1" /> {imgList.length} Photos</span>
+                          {vidList.length > 0 && (
+                            <span className="flex items-center text-secondary"><Video size={12} className="mr-1" /> {vidList.length} Videos</span>
+                          )}
+                        </div>
                         <p className="text-secondary font-black text-sm italic">₹{p.price.toLocaleString('en-IN')}</p>
                         {p.bhk && <p className="text-zinc-400 text-[10px] font-black uppercase tracking-widest mt-1">{p.bhk}</p>}
                       </div>
@@ -620,44 +667,109 @@ const AgentDashboard = () => {
                   ></textarea>
                 </div>
 
-                <div className="space-y-4">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Media Upload</label>
-                  {editingPropertyId && existingImages.length > 0 && selectedFiles.length === 0 && (
-                    <div className="flex flex-wrap gap-3 mb-4">
-                      {existingImages.map((img, i) => (
-                        <div key={i} className="relative group">
-                          <img src={img} className="w-20 h-20 object-cover rounded-xl border border-zinc-200" alt="" />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
-                            <Check size={20} className="text-white" />
-                          </div>
+                {/* Media Upload Sections */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Property Photos Upload Section */}
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1 text-left block">Property Photos</label>
+                    {editingPropertyId && existingImages.length > 0 && selectedImageFiles.length === 0 && (
+                      <div className="space-y-2 mb-4 text-left">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Existing Photos</p>
+                        <div className="flex flex-wrap gap-2">
+                          {existingImages.map((img, i) => (
+                            <div key={i} className="relative w-14 h-14 rounded-lg overflow-hidden border border-zinc-200 shadow-sm">
+                              <img src={img} className="w-full h-full object-cover" alt="" />
+                              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                <Check size={12} className="text-white animate-pulse" />
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                      <p className="w-full text-zinc-400 text-[10px] font-black uppercase tracking-widest mt-2 italic">Using existing photos. Upload new ones to replace.</p>
-                    </div>
-                  )}
-                  <div className="border-4 border-dashed border-zinc-100 rounded-[3rem] p-16 text-center hover:border-primary/50 transition-all group relative cursor-pointer bg-zinc-50/50">
-                    <input 
-                      type="file" 
-                      multiple 
-                      onChange={handleFileSelect}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                      disabled={uploading}
-                    />
-                    <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-premium text-zinc-300 group-hover:text-primary transition-colors">
-                      <UploadCloud size={40} />
-                    </div>
-                    <p className="text-secondary font-black text-xl">Click to browse photos</p>
-                    <p className="text-zinc-400 text-sm mt-2 font-medium">Select up to 5 images (PNG, JPG)</p>
-                    
-                    {selectedFiles.length > 0 && (
-                      <div className="mt-8 flex flex-wrap gap-3 justify-center">
-                        {Array.from(selectedFiles).map((file, i) => (
-                          <div key={i} className="bg-primary/20 text-secondary px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center">
-                            <Check size={14} className="mr-2" /> {file.name.slice(0, 15)}...
-                          </div>
-                        ))}
+                        <p className="text-zinc-400 text-[8px] font-bold uppercase tracking-wider italic">Upload new photos to replace.</p>
                       </div>
                     )}
+                    <div className="border-4 border-dashed border-zinc-100 rounded-[2rem] p-8 text-center hover:border-primary/50 transition-all group relative cursor-pointer bg-zinc-50/50">
+                      <input 
+                        type="file" 
+                        multiple 
+                        accept="image/*"
+                        onChange={handleImageFileSelect}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        disabled={uploading}
+                      />
+                      <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-premium text-zinc-300 group-hover:text-primary transition-colors">
+                        <UploadCloud size={24} />
+                      </div>
+                      <p className="text-secondary font-black text-sm">Click to browse photos</p>
+                      <p className="text-zinc-400 text-[10px] mt-1 font-medium">Select up to 5 images (PNG, JPG)</p>
+                      
+                      {selectedImageFiles.length > 0 && (
+                        <div className="mt-4">
+                          <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400 mb-2">Selected Photos</p>
+                          <div className="flex flex-wrap gap-2 justify-center">
+                            {Array.from(selectedImageFiles).map((file, i) => (
+                              <div key={i} className="relative w-14 h-14 bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm flex flex-col items-center justify-center p-1 text-center">
+                                <ImageIcon size={16} className="text-secondary mb-0.5" />
+                                <span className="text-secondary text-[6px] font-black w-full truncate px-0.5">
+                                  {file.name}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Property Video Upload Section */}
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1 text-left block">Property Walkthrough Video</label>
+                    {editingPropertyId && existingVideos.length > 0 && selectedVideoFiles.length === 0 && (
+                      <div className="space-y-2 mb-4 text-left">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Existing Videos</p>
+                        <div className="flex flex-wrap gap-2">
+                          {existingVideos.map((vid, i) => (
+                            <div key={i} className="relative w-14 h-14 bg-black rounded-lg overflow-hidden border border-zinc-200 shadow-sm flex items-center justify-center">
+                              <video src={vid} className="w-full h-full object-cover opacity-70" />
+                              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                <Check size={12} className="text-white animate-pulse" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-zinc-400 text-[8px] font-bold uppercase tracking-wider italic">Upload a new video to replace.</p>
+                      </div>
+                    )}
+                    <div className="border-4 border-dashed border-zinc-100 rounded-[2rem] p-8 text-center hover:border-primary/50 transition-all group relative cursor-pointer bg-zinc-50/50">
+                      <input 
+                        type="file" 
+                        accept="video/*"
+                        onChange={handleVideoFileSelect}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        disabled={uploading}
+                      />
+                      <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-premium text-zinc-300 group-hover:text-primary transition-colors">
+                        <UploadCloud size={24} />
+                      </div>
+                      <p className="text-secondary font-black text-sm">Click to browse video</p>
+                      <p className="text-zinc-400 text-[10px] mt-1 font-medium">Select 1 video (MP4, MOV)</p>
+                      
+                      {selectedVideoFiles.length > 0 && (
+                        <div className="mt-4">
+                          <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400 mb-2">Selected Video</p>
+                          <div className="flex flex-wrap gap-2 justify-center">
+                            {Array.from(selectedVideoFiles).map((file, i) => (
+                              <div key={i} className="relative w-14 h-14 bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm flex flex-col items-center justify-center p-1 text-center">
+                                <Video size={16} className="text-secondary mb-0.5" />
+                                <span className="text-secondary text-[6px] font-black w-full truncate px-0.5">
+                                  {file.name}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 

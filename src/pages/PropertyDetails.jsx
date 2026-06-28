@@ -43,6 +43,7 @@ const PropertyDetails = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [showZoomModal, setShowZoomModal] = useState(false);
   const [zoomScale, setZoomScale] = useState(1);
+  const [zoomImageIndex, setZoomImageIndex] = useState(0);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -167,9 +168,28 @@ const PropertyDetails = () => {
       ? [property.images] 
       : [];
 
-  const images = imageList.length > 0 
-    ? imageList 
-    : ['https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=1200'];
+  const videoList = Array.isArray(property.videos)
+    ? property.videos
+    : (typeof property.videos === 'string' && property.videos.trim() !== '')
+      ? [property.videos]
+      : [];
+
+  const mediaList = [
+    ...videoList.map(url => ({ url, type: 'video' })),
+    ...imageList.map(url => ({ url, type: 'image' }))
+  ];
+
+  const displayMediaList = mediaList.length > 0 
+    ? mediaList 
+    : [{ url: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=1200', type: 'image' }];
+
+  const onlyImages = displayMediaList.filter(item => item.type === 'image');
+
+  const openZoomModal = () => {
+    const idx = onlyImages.findIndex(item => item.url === displayMediaList[currentImageIndex]?.url);
+    setZoomImageIndex(idx >= 0 ? idx : 0);
+    setShowZoomModal(true);
+  };
 
   return (
     <>
@@ -180,52 +200,69 @@ const PropertyDetails = () => {
           {/* Left Column: Gallery & Details */}
           <div className="lg:col-span-2 space-y-8">
             {/* Gallery Carousel */}
-            <div className="relative aspect-video rounded-[3rem] overflow-hidden group shadow-premium border border-zinc-100">
+            <div className="relative aspect-video rounded-[3rem] overflow-hidden group shadow-premium border border-zinc-100 bg-black flex items-center justify-center">
               <AnimatePresence mode="wait">
-                <motion.img
-                  key={currentImageIndex}
-                  src={images[currentImageIndex]}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="w-full h-full object-cover cursor-zoom-in"
-                  onClick={() => setShowZoomModal(true)}
-                />
+                {displayMediaList[currentImageIndex]?.type === 'video' ? (
+                  <motion.video
+                    key={currentImageIndex}
+                    src={displayMediaList[currentImageIndex].url}
+                    controls
+                    className="w-full h-full object-contain animate-fade-in"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                  />
+                ) : (
+                  <motion.img
+                    key={currentImageIndex}
+                    src={displayMediaList[currentImageIndex]?.url}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="w-full h-full object-cover cursor-zoom-in"
+                    onClick={openZoomModal}
+                  />
+                )}
               </AnimatePresence>
               
-              {images.length > 1 && (
+              {displayMediaList.length > 1 && (
                 <>
                   <button 
-                    onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
+                    onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? displayMediaList.length - 1 : prev - 1))}
                     className="absolute left-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/90 backdrop-blur-md text-secondary rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl hover:bg-secondary hover:text-white"
                   >
                     <ChevronLeft size={28} />
                   </button>
                   <button 
-                    onClick={() => setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
+                    onClick={() => setCurrentImageIndex((prev) => (prev === displayMediaList.length - 1 ? 0 : prev + 1))}
                     className="absolute right-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/90 backdrop-blur-md text-secondary rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl hover:bg-secondary hover:text-white"
                   >
                     <ChevronRight size={28} />
                   </button>
                   
-                  <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex space-x-3">
-                    {images.map((_, idx) => (
-                      <div 
+                  <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex space-x-3 z-20">
+                    {displayMediaList.map((media, idx) => (
+                      <button 
                         key={idx} 
-                        className={`w-2.5 h-2.5 rounded-full transition-all ${idx === currentImageIndex ? 'bg-secondary w-8' : 'bg-white/50 backdrop-blur-sm'}`}
-                      ></div>
+                        onClick={() => setCurrentImageIndex(idx)}
+                        className={`w-2.5 h-2.5 rounded-full transition-all hover:scale-125 focus:outline-none ${idx === currentImageIndex ? 'bg-secondary w-8' : 'bg-white/50 backdrop-blur-sm'}`}
+                        title={media.type === 'video' ? `View Video ${idx + 1}` : `View Photo ${idx + 1}`}
+                      ></button>
                     ))}
                   </div>
                 </>
               )}
 
-              <button 
-                onClick={() => setShowZoomModal(true)}
-                className="absolute top-6 right-6 w-12 h-12 bg-white/90 backdrop-blur-md text-secondary rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl hover:bg-secondary hover:text-white"
-              >
-                <Maximize size={20} />
-              </button>
+              {displayMediaList[currentImageIndex]?.type === 'image' && (
+                <button 
+                  onClick={openZoomModal}
+                  className="absolute top-6 right-6 w-12 h-12 bg-white/90 backdrop-blur-md text-secondary rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl hover:bg-secondary hover:text-white"
+                >
+                  <Maximize size={20} />
+                </button>
+              )}
             </div>
 
             {/* Title & Stats */}
@@ -482,7 +519,7 @@ const PropertyDetails = () => {
             className="relative w-full h-full flex items-center justify-center overflow-hidden"
           >
             <motion.img 
-              src={images[currentImageIndex]}
+              src={onlyImages[zoomImageIndex]?.url}
               alt="Property Zoom"
               style={{ scale: zoomScale }}
               className="max-w-full max-h-full object-contain transition-transform duration-200"
@@ -520,11 +557,11 @@ const PropertyDetails = () => {
             </div>
 
             {/* Navigation in Zoom Modal */}
-            {images.length > 1 && (
+            {onlyImages.length > 1 && (
               <>
                 <button 
                   onClick={() => {
-                    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+                    setZoomImageIndex((prev) => (prev === 0 ? onlyImages.length - 1 : prev - 1));
                     setZoomScale(1);
                   }}
                   className="absolute left-6 top-1/2 -translate-y-1/2 w-16 h-16 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-all"
@@ -533,7 +570,7 @@ const PropertyDetails = () => {
                 </button>
                 <button 
                   onClick={() => {
-                    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+                    setZoomImageIndex((prev) => (prev === onlyImages.length - 1 ? 0 : prev + 1));
                     setZoomScale(1);
                   }}
                   className="absolute right-6 top-1/2 -translate-y-1/2 w-16 h-16 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-all"
