@@ -139,9 +139,18 @@ const PropertyCard = ({ property }) => {
             <MapPin size={16} className="mr-1.5 text-secondary" />
             <span className="line-clamp-1">{location}</span>
           </div>
-          {property.underConstruction && property.builderName && (
-            <div className="text-zinc-500 text-xs font-semibold mt-1">
-              Builder: <span className="text-secondary font-bold">{property.builderName}</span>
+          {property.underConstruction && (
+            <div className="flex flex-col space-y-0.5 mt-1">
+              {property.builderName && (
+                <div className="text-zinc-500 text-xs font-semibold">
+                  Builder: <span className="text-secondary font-bold">{property.builderName}</span>
+                </div>
+              )}
+              {property.possessionDate && (
+                <div className="text-zinc-500 text-xs font-semibold">
+                  Possession: <span className="text-secondary font-bold">{new Date(property.possessionDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long' })}</span>
+                </div>
+              )}
             </div>
           )}
           {bhk && (
@@ -153,10 +162,17 @@ const PropertyCard = ({ property }) => {
 
         <div className="flex items-center justify-between pt-5 border-t border-zinc-50">
           <div className="flex flex-col">
-            <span className="text-[10px] text-zinc-400 uppercase font-black tracking-widest leading-none mb-1">Total Price</span>
+            <span className="text-[10px] text-zinc-400 uppercase font-black tracking-widest leading-none mb-1">
+              {property.underConstruction && property.maxPrice ? 'Price Range' : 'Total Price'}
+            </span>
             <div className="flex items-center text-secondary font-black text-xl">
               <IndianRupee size={18} />
-              <span>{price.toLocaleString('en-IN')}</span>
+              <span>
+                {property.underConstruction && property.maxPrice 
+                  ? `${price.toLocaleString('en-IN')} - ${property.maxPrice.toLocaleString('en-IN')}`
+                  : price.toLocaleString('en-IN')
+                }
+              </span>
             </div>
           </div>
           <div className="bg-zinc-50 p-2 rounded-xl text-secondary">

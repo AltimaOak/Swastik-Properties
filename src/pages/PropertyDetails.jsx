@@ -277,10 +277,17 @@ const PropertyDetails = () => {
                 </div>
                 <div className="flex flex-col md:flex-row items-center gap-4">
                   <div className="bg-primary text-black px-8 py-4 rounded-3xl shadow-xl shadow-primary/10">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none mb-2 opacity-60">Total Investment</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none mb-2 opacity-60">
+                      {property.underConstruction && property.maxPrice ? 'Price Range' : 'Total Investment'}
+                    </span>
                     <div className="flex items-center text-3xl font-black italic">
                       <IndianRupee size={28} />
-                      <span>{property.price.toLocaleString('en-IN')}</span>
+                      <span>
+                        {property.underConstruction && property.maxPrice 
+                          ? `${property.price.toLocaleString('en-IN')} - ${property.maxPrice.toLocaleString('en-IN')}`
+                          : property.price.toLocaleString('en-IN')
+                        }
+                      </span>
                     </div>
                   </div>
                   <button 
@@ -352,6 +359,14 @@ const PropertyDetails = () => {
                         <span className="text-[10px] text-zinc-400 uppercase font-black tracking-widest mb-2">MahaRERA Reg No</span>
                         <div className="flex items-center text-secondary font-black uppercase">
                           <span>{property.mahareraNo}</span>
+                        </div>
+                      </div>
+                    )}
+                    {property.possessionDate && (
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-zinc-400 uppercase font-black tracking-widest mb-2">Expected Possession</span>
+                        <div className="flex items-center text-secondary font-black">
+                          <span>{new Date(property.possessionDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                         </div>
                       </div>
                     )}

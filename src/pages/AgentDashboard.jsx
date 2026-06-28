@@ -35,6 +35,7 @@ const AgentDashboard = () => {
   const [formData, setFormData] = useState({
     title: '',
     price: '',
+    maxPrice: '',
     location: '',
     type: 'Flat',
     purpose: 'Buy',
@@ -44,7 +45,8 @@ const AgentDashboard = () => {
     bhk: '1 BHK',
     underConstruction: false,
     builderName: '',
-    mahareraNo: ''
+    mahareraNo: '',
+    possessionDate: ''
   });
   const [editingPropertyId, setEditingPropertyId] = useState(null);
   const [existingImages, setExistingImages] = useState([]);
@@ -116,6 +118,14 @@ const AgentDashboard = () => {
         alert("Please enter the MahaRERA Number.");
         return;
       }
+      if (!formData.maxPrice || Number(formData.maxPrice) < Number(formData.price)) {
+        alert("Please enter a valid Max Price that is greater than or equal to Min Price.");
+        return;
+      }
+      if (!formData.possessionDate) {
+        alert("Please select the Expected Possession Date.");
+        return;
+      }
     }
 
     setUploading(true);
@@ -160,6 +170,8 @@ const AgentDashboard = () => {
       const propertyData = {
         ...formData,
         price: Number(formData.price),
+        maxPrice: formData.underConstruction && formData.maxPrice ? Number(formData.maxPrice) : null,
+        possessionDate: formData.underConstruction && formData.possessionDate ? formData.possessionDate : null,
         images: imageUrls,
         videos: videoUrls,
         agentId: currentUser.uid,
@@ -191,6 +203,7 @@ const AgentDashboard = () => {
     setFormData({
       title: property.title,
       price: property.price,
+      maxPrice: property.maxPrice || '',
       location: property.location,
       type: property.type,
       purpose: property.purpose || 'Buy',
@@ -200,7 +213,8 @@ const AgentDashboard = () => {
       bhk: property.bhk || '1 BHK',
       underConstruction: property.underConstruction || false,
       builderName: property.builderName || '',
-      mahareraNo: property.mahareraNo || ''
+      mahareraNo: property.mahareraNo || '',
+      possessionDate: property.possessionDate || ''
     });
     setEditingPropertyId(property.id);
     setExistingImages(property.images || []);
@@ -234,6 +248,7 @@ const AgentDashboard = () => {
     setFormData({ 
       title: '', 
       price: '', 
+      maxPrice: '',
       location: '', 
       type: 'Flat', 
       purpose: 'Buy', 
@@ -243,7 +258,8 @@ const AgentDashboard = () => {
       bhk: '1 BHK',
       underConstruction: false,
       builderName: '',
-      mahareraNo: ''
+      mahareraNo: '',
+      possessionDate: ''
     });
     setSelectedImageFiles([]);
     setSelectedVideoFiles([]);
@@ -339,7 +355,12 @@ const AgentDashboard = () => {
                             <span className="flex items-center text-secondary"><Video size={12} className="mr-1" /> {vidList.length} Videos</span>
                           )}
                         </div>
-                        <p className="text-secondary font-black text-sm italic">₹{p.price.toLocaleString('en-IN')}</p>
+                        <p className="text-secondary font-black text-sm italic">
+                          ₹{p.underConstruction && p.maxPrice 
+                            ? `${p.price.toLocaleString('en-IN')} - ₹${p.maxPrice.toLocaleString('en-IN')}`
+                            : p.price.toLocaleString('en-IN')
+                          }
+                        </p>
                         {p.bhk && <p className="text-zinc-400 text-[10px] font-black uppercase tracking-widest mt-1">{p.bhk}</p>}
                       </div>
                     </div>
@@ -504,14 +525,35 @@ const AgentDashboard = () => {
                     required
                   />
                   <div className="grid grid-cols-2 gap-4">
-                    <Input 
-                      label="Price (₹)"
-                      type="number"
-                      placeholder="8500000"
-                      value={formData.price}
-                      onChange={(e) => setFormData({...formData, price: e.target.value})}
-                      required
-                    />
+                    {!formData.underConstruction ? (
+                      <Input 
+                        label="Price (₹)"
+                        type="number"
+                        placeholder="8500000"
+                        value={formData.price}
+                        onChange={(e) => setFormData({...formData, price: e.target.value})}
+                        required
+                      />
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input 
+                          label="Min Price (₹)"
+                          type="number"
+                          placeholder="Min Price"
+                          value={formData.price}
+                          onChange={(e) => setFormData({...formData, price: e.target.value})}
+                          required
+                        />
+                        <Input 
+                          label="Max Price (₹)"
+                          type="number"
+                          placeholder="Max Price"
+                          value={formData.maxPrice}
+                          onChange={(e) => setFormData({...formData, maxPrice: e.target.value})}
+                          required
+                        />
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Type</label>
@@ -568,7 +610,9 @@ const AgentDashboard = () => {
                             underConstruction: checked,
                             bhk: checked ? [] : '1 BHK',
                             builderName: checked ? formData.builderName : '',
-                            mahareraNo: checked ? formData.mahareraNo : ''
+                            mahareraNo: checked ? formData.mahareraNo : '',
+                            maxPrice: checked ? formData.maxPrice : '',
+                            possessionDate: checked ? formData.possessionDate : ''
                           });
                         }}
                         className="w-5 h-5 rounded border-zinc-300 text-secondary focus:ring-secondary cursor-pointer"
@@ -611,6 +655,13 @@ const AgentDashboard = () => {
                         placeholder="e.g. P517000XXXXX"
                         value={formData.mahareraNo}
                         onChange={(e) => setFormData({...formData, mahareraNo: e.target.value})}
+                        required
+                      />
+                      <Input 
+                        label="Expected Possession Date"
+                        type="date"
+                        value={formData.possessionDate || ''}
+                        onChange={(e) => setFormData({...formData, possessionDate: e.target.value})}
                         required
                       />
                       <div className="col-span-1 md:col-span-2 space-y-2">
