@@ -106,7 +106,7 @@ const Properties = () => {
         {/* Search & Filter Bar */}
         <div className="flex flex-col lg:flex-row gap-4 mb-12">
           {/* Buy/Rent Sliding Tabs */}
-          <div className="flex bg-zinc-100 p-1.5 rounded-2xl border border-zinc-200/50 w-full lg:w-auto relative shadow-inner">
+          <div className="flex bg-zinc-100 p-1.5 rounded-2xl border border-zinc-200/50 w-full lg:w-auto relative shadow-inner overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {[
               { label: 'All', value: '' },
               { label: 'Buy', value: 'Buy' },
@@ -116,7 +116,7 @@ const Properties = () => {
               <button
                 key={option.value}
                 onClick={() => setFilters(prev => ({ ...prev, purpose: option.value }))}
-                className="flex-1 py-3 px-6 rounded-xl text-sm font-black transition-colors duration-300 relative z-10 cursor-pointer"
+                className="flex-1 md:flex-initial flex-shrink-0 py-3 px-4 md:px-6 rounded-xl text-xs sm:text-sm font-black transition-colors duration-300 relative z-10 cursor-pointer"
                 style={{
                   color: filters.purpose === option.value ? '#FFFFFF' : '#71717A'
                 }}
