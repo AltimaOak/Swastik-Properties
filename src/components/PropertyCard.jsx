@@ -104,6 +104,11 @@ const PropertyCard = ({ property }) => {
               For {property.purpose}
             </span>
           )}
+          {property.underConstruction && (
+            <span className="bg-amber-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg w-fit">
+              Under Construction
+            </span>
+          )}
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-secondary/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
           <Link 
@@ -125,8 +130,15 @@ const PropertyCard = ({ property }) => {
             <MapPin size={16} className="mr-1.5 text-secondary" />
             <span className="line-clamp-1">{location}</span>
           </div>
+          {property.underConstruction && property.builderName && (
+            <div className="text-zinc-500 text-xs font-semibold mt-1">
+              Builder: <span className="text-secondary font-bold">{property.builderName}</span>
+            </div>
+          )}
           {bhk && (
-            <p className="text-[10px] font-black uppercase tracking-widest text-secondary/50 mt-2">{bhk}</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-secondary/50 mt-2">
+              {Array.isArray(bhk) ? bhk.join(', ') : bhk}
+            </p>
           )}
         </div>
 

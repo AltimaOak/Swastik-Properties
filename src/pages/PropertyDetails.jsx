@@ -132,7 +132,7 @@ const PropertyDetails = () => {
         buyerName: currentUser.displayName || 'Anonymous User',
         buyerEmail: currentUser.email,
         buyerPhone: phoneNumber,
-        message: `I am interested in this ${property.bhk || ''} ${property.type}.`,
+        message: `I am interested in this ${Array.isArray(property.bhk) ? property.bhk.join(', ') : (property.bhk || '')} ${property.type}.`,
         contact: currentUser.email,
         createdAt: new Date().toISOString(),
         propertyTitle: property.title,
@@ -288,11 +288,37 @@ const PropertyDetails = () => {
                 </div>
                 {property.bhk && (
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-zinc-400 uppercase font-black tracking-widest mb-2">BHK</span>
+                    <span className="text-[10px] text-zinc-400 uppercase font-black tracking-widest mb-2">BHK / Rooms</span>
                     <div className="flex items-center text-secondary font-black uppercase">
-                      <span>{property.bhk}</span>
+                      <span>{Array.isArray(property.bhk) ? property.bhk.join(', ') : property.bhk}</span>
                     </div>
                   </div>
+                )}
+                {property.underConstruction && (
+                  <>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-zinc-400 uppercase font-black tracking-widest mb-2">Status</span>
+                      <div className="flex items-center text-amber-600 font-black">
+                        <span>Under Construction</span>
+                      </div>
+                    </div>
+                    {property.builderName && (
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-zinc-400 uppercase font-black tracking-widest mb-2">Builder</span>
+                        <div className="flex items-center text-secondary font-black">
+                          <span>{property.builderName}</span>
+                        </div>
+                      </div>
+                    )}
+                    {property.mahareraNo && (
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-zinc-400 uppercase font-black tracking-widest mb-2">MahaRERA Reg No</span>
+                        <div className="flex items-center text-secondary font-black uppercase">
+                          <span>{property.mahareraNo}</span>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
                 <div className="flex flex-col">
                   <span className="text-[10px] text-zinc-400 uppercase font-black tracking-widest mb-2">Reference</span>
