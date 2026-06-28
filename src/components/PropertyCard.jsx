@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { MapPin, Home, IndianRupee, ArrowUpRight, Heart, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -17,6 +17,14 @@ const PropertyCard = ({ property }) => {
   const [liking, setLiking] = useState(false);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const navigate = useNavigate();
+
+  const handleCardClick = (e) => {
+    if (e.target.closest('button') || e.target.closest('a')) {
+      return;
+    }
+    navigate(`/property/${id}`);
+  };
 
   const imageList = Array.isArray(images) 
     ? images 
@@ -79,7 +87,8 @@ const PropertyCard = ({ property }) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       whileHover={{ y: -10 }}
-      className="group bg-white rounded-3xl overflow-hidden border border-zinc-100 hover:border-secondary/20 transition-all duration-300 shadow-premium relative"
+      onClick={handleCardClick}
+      className="group bg-white rounded-3xl overflow-hidden border border-zinc-100 hover:border-secondary/20 transition-all duration-300 shadow-premium relative cursor-pointer"
     >
       <button 
         onClick={handleLike}

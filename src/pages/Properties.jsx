@@ -54,7 +54,11 @@ const Properties = () => {
       results = results.filter(p => p.type === filters.type);
     }
     if (filters.purpose) {
-      results = results.filter(p => p.purpose === filters.purpose);
+      if (filters.purpose === 'Underconstruction') {
+        results = results.filter(p => p.underConstruction === true);
+      } else {
+        results = results.filter(p => p.purpose === filters.purpose);
+      }
     }
     if (filters.searchQuery) {
       const query = filters.searchQuery.toLowerCase().trim();
@@ -106,7 +110,8 @@ const Properties = () => {
             {[
               { label: 'All', value: '' },
               { label: 'Buy', value: 'Buy' },
-              { label: 'Rent', value: 'Rent' }
+              { label: 'Rent', value: 'Rent' },
+              { label: 'Underconstruction', value: 'Underconstruction' }
             ].map((option) => (
               <button
                 key={option.value}
@@ -190,6 +195,7 @@ const Properties = () => {
                     <option value="">Any Purpose</option>
                     <option value="Buy">Buy</option>
                     <option value="Rent">Rent</option>
+                    <option value="Underconstruction">Underconstruction</option>
                   </select>
                 </div>
 
