@@ -78,7 +78,7 @@ const Footer = () => {
                   <span>swastikprop808@gmail.com</span>
                 </a>
 
-              </li>
+              </li> 
               <li>
                 <span> MAHARERA REG.NO. A031332601288 </span>
               </li>

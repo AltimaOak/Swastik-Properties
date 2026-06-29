@@ -13,4 +13,4 @@ Disallow: /signup
 Disallow: /forgot-password
 Disallow: /dashboard/
 
-Sitemap: https://swastikproperties.com/sitemap.xml
+Sitemap: https://www.swastik-properties.co.in/sitemap.xml
