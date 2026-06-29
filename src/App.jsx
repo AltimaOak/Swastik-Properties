@@ -7,6 +7,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
 import ScrollToTop from './components/ScrollToTop';
+import CookieConsent from './components/CookieConsent';
 import { Analytics } from '@vercel/analytics/react';
 
 // Pages
@@ -21,6 +22,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import AgentDashboard from './pages/AgentDashboard';
 import BuyerDashboard from './pages/BuyerDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsAndConditions from './pages/TermsAndConditions';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -52,6 +55,8 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms-of-service" element={<TermsAndConditions />} />
               
               {/* Protected Routes */}
               <Route 
@@ -74,6 +79,7 @@ function App() {
           </main>
           <Footer />
           <FloatingWhatsApp />
+          <CookieConsent />
         </div>
       </Router>
       <Analytics />
