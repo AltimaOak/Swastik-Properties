@@ -69,8 +69,15 @@ const Footer = () => {
                 <a href="mailto:swastik_prop@rediffmail.com" className="flex items-center space-x-3 hover:text-primary transition-colors">
                   <Mail size={20} className="text-primary shrink-0 pointer-events-none" />
                   <span>swastik_prop@rediffmail.com</span>
+
                 </a>
-                
+                </li >
+                <li>
+                <a href="mailto:swastikprop808@gmail.com" className="flex items-center space-x-3 hover:text-primary transition-colors">
+                  <Mail size={20} className="text-primary shrink-0 pointer-events-none" />
+                  <span>swastikprop808@gmail.com</span>
+                </a>
+
               </li>
               <li>
                 <span> MAHARERA REG.NO. A031332601288 </span>
