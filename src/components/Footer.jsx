@@ -79,8 +79,12 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="pt-8 border-t border-white/10 text-center text-[10px] font-black uppercase tracking-widest text-white/30">
+        <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/30 space-y-4 md:space-y-0">
           <p>© {new Date().getFullYear()} Swastik Properties. All rights reserved. Designed for Excellence.</p>
+          <div className="flex space-x-6">
+            <Link to="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+            <Link to="/terms-of-service" className="hover:text-primary transition-colors">Terms & Conditions</Link>
+          </div>
         </div>
       </div>
     </footer>

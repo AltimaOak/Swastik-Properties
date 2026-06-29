@@ -1,0 +1,16 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+Allow: /properties
+Allow: /about
+Allow: /contact
+Allow: /privacy-policy
+Allow: /terms-of-service
+
+# Block crawler access to internal dashboards and auth pages
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /dashboard/
+
+Sitemap: https://swastikproperties.com/sitemap.xml
