@@ -24,6 +24,8 @@ import BuyerDashboard from './pages/BuyerDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsAndConditions from './pages/TermsAndConditions';
+import ClientProfile from "./pages/ClientProfile";
+import "./App.css";
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -57,6 +59,7 @@ function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms-of-service" element={<TermsAndConditions />} />
+              <Route path="/client-profile" element={<ClientProfile />}/>
               
               {/* Protected Routes */}
               <Route 

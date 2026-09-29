@@ -28,6 +28,7 @@ const Navbar = () => {
     { name: 'Properties', path: '/properties', icon: <Search size={18} /> },
     { name: 'About', path: '/about', icon: <Info size={18} /> },
     { name: 'Contact', path: '/contact', icon: <Phone size={18} /> },
+    {name:  'Client Profile', path: '/client-profile', icon: <User size={18} />},
   ];
 
   return (
