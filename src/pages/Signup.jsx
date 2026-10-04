@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { auth, db } from '../firebase/config';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { ref, set } from 'firebase/database';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import { motion } from 'framer-motion';
-import { UserPlus, User, Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, User, Mail, Lock, AlertCircle, Eye, EyeOff, Sparkles } from 'lucide-react';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -19,6 +19,11 @@ const Signup = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const searchParams = new URLSearchParams(location.search);
+  const redirectUrl = searchParams.get('redirect');
+  const isClientProfileRedirect = redirectUrl === '/client-profile';
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -33,18 +38,40 @@ const Signup = () => {
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       const user = userCredential.user;
 
-      // Save user to Realtime Database
-      set(ref(db, `users/${user.uid}`), {
-        uid: user.uid,
-        name: formData.name,
-        email: formData.email,
-        role: formData.role,
-        createdAt: new Date().toISOString()
-      }).catch(e => console.warn("Database sync will happen later:", e));
+      // Update Firebase Auth user displayName immediately
+      try {
+        await updateProfile(user, { displayName: formData.name.trim() });
+      } catch (profileErr) {
+        console.warn("Could not set displayName on user:", profileErr);
+      }
 
-      // Immediate navigation
-      if (formData.role === 'agent') navigate('/dashboard/agent');
-      else navigate('/dashboard/buyer');
+      // Save user to Realtime Database
+      try {
+        await set(ref(db, `users/${user.uid}`), {
+          uid: user.uid,
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          role: formData.role,
+          createdAt: new Date().toISOString()
+        });
+      } catch (e) {
+        console.warn("Database sync will happen later:", e);
+      }
+
+      // If a redirect URL was specified (e.g. /client-profile), navigate there with prefilled data
+      if (redirectUrl) {
+        navigate(redirectUrl, { 
+          state: { 
+            ...(location.state || {}),
+            prefillName: formData.name.trim(),
+            prefillEmail: formData.email.trim()
+          } 
+        });
+      } else if (formData.role === 'agent') {
+        navigate('/dashboard/agent');
+      } else {
+        navigate('/dashboard/buyer');
+      }
     } catch (err) {
       console.error(err);
       setError(err.message || 'Failed to create account.');
@@ -63,13 +90,31 @@ const Signup = () => {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md px-6 relative z-10"
       >
-        <div className="bg-white border border-zinc-100 p-10 rounded-[3rem] shadow-premium">
-          <div className="text-center mb-10">
+        <div className="bg-white border border-zinc-100 p-8 md:p-10 rounded-[3rem] shadow-premium">
+          {/* Client Profile Step 1 Indicator Banner */}
+          {isClientProfileRedirect && (
+            <div className="mb-8 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/80 p-5 rounded-2xl text-center shadow-sm">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary text-white text-[10px] font-black uppercase tracking-widest rounded-full mb-2">
+                <Sparkles size={12} className="text-primary" />
+                <span>Step 1 of 2</span>
+              </div>
+              <h3 className="text-base font-black text-secondary">
+                Create Account to Fill Client Profile
+              </h3>
+              <p className="text-xs text-zinc-600 mt-1.5 leading-relaxed">
+                Please create your account first. Once signed up, you'll immediately fill out your property requirements and connect with our consultants.
+              </p>
+            </div>
+          )}
+
+          <div className="text-center mb-8">
             <div className="w-20 h-20 bg-primary rounded-[2rem] flex items-center justify-center mx-auto mb-6 -rotate-6 shadow-xl">
               <UserPlus className="text-black" size={36} />
             </div>
             <h2 className="text-3xl font-black text-secondary italic">Create Account</h2>
-            <p className="text-zinc-400 mt-2 font-medium">Join the Swastik family today</p>
+            <p className="text-zinc-400 mt-2 font-medium">
+              {isClientProfileRedirect ? 'Join to submit your property requirement' : 'Join the Swastik family today'}
+            </p>
           </div>
 
           <form onSubmit={handleSignup} className="space-y-6">
@@ -149,13 +194,19 @@ const Signup = () => {
             </div>
 
             <Button type="submit" variant="secondary" className="w-full py-5 text-lg mt-4 shadow-xl shadow-secondary/20" disabled={loading}>
-              {loading ? 'Creating Account...' : 'Get Started'}
+              {loading ? 'Creating Account...' : isClientProfileRedirect ? 'Sign Up & Continue to Form' : 'Get Started'}
             </Button>
           </form>
 
           <div className="mt-10 text-center text-sm font-medium text-zinc-400">
             Already have an account? {' '}
-            <Link to="/login" className="text-secondary font-black hover:underline underline-offset-4">Sign In</Link>
+            <Link 
+              to={redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl)}` : "/login"} 
+              state={location.state}
+              className="text-secondary font-black hover:underline underline-offset-4"
+            >
+              Sign In
+            </Link>
           </div>
         </div>
       </motion.div>

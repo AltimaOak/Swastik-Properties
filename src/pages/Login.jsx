@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { auth, db } from '../firebase/config';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { ref, get, child } from 'firebase/database';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import { motion } from 'framer-motion';
-import { LogIn, Lock, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { LogIn, Lock, Mail, AlertCircle, Eye, EyeOff, Sparkles } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -15,6 +15,11 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const searchParams = new URLSearchParams(location.search);
+  const redirectUrl = searchParams.get('redirect');
+  const isClientProfileRedirect = redirectUrl === '/client-profile';
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -24,19 +29,38 @@ const Login = () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
-      // Fetch user role to redirect properly
+      // Fetch user data from DB to redirect properly and carry user name
+      let fetchedName = '';
+      let role = 'buyer';
       try {
         const userSnapshot = await get(child(ref(db), `users/${userCredential.user.uid}`));
-        
         if (userSnapshot.exists()) {
-          const role = userSnapshot.val().role;
-          if (role === 'agent') navigate('/dashboard/agent');
-          else navigate('/dashboard/buyer');
-          return;
+          const val = userSnapshot.val();
+          fetchedName = val.name || '';
+          role = val.role || 'buyer';
         }
       } catch (err) {
         console.warn("Database role fetch failed:", err);
       }
+
+      // If a redirect URL was specified (e.g. /client-profile), navigate there with user info
+      if (redirectUrl) {
+        navigate(redirectUrl, { 
+          state: { 
+            ...(location.state || {}),
+            prefillName: fetchedName || userCredential.user.displayName || '',
+            prefillEmail: userCredential.user.email 
+          } 
+        });
+        return;
+      }
+
+      if (role === 'agent') {
+        navigate('/dashboard/agent');
+      } else {
+        navigate('/dashboard/buyer');
+      }
+      return;
       
       // Fallback: If we can't get the role or it doesn't exist, go to home
       navigate('/');
@@ -69,13 +93,31 @@ const Login = () => {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md px-6 relative z-10"
       >
-        <div className="bg-white border border-zinc-100 p-10 rounded-[3rem] shadow-premium">
-          <div className="text-center mb-10">
+        <div className="bg-white border border-zinc-100 p-8 md:p-10 rounded-[3rem] shadow-premium">
+          {/* Client Profile Indicator Banner */}
+          {isClientProfileRedirect && (
+            <div className="mb-8 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/80 p-5 rounded-2xl text-center shadow-sm">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary text-white text-[10px] font-black uppercase tracking-widest rounded-full mb-2">
+                <Sparkles size={12} className="text-primary" />
+                <span>Client Profile Access</span>
+              </div>
+              <h3 className="text-base font-black text-secondary">
+                Sign In to Continue to Client Profile
+              </h3>
+              <p className="text-xs text-zinc-600 mt-1.5 leading-relaxed">
+                Log in to submit and track your property requirements with Swastik Properties.
+              </p>
+            </div>
+          )}
+
+          <div className="text-center mb-8">
             <div className="w-20 h-20 bg-secondary rounded-[2rem] flex items-center justify-center mx-auto mb-6 rotate-6 shadow-xl">
               <LogIn className="text-white" size={36} />
             </div>
             <h2 className="text-3xl font-black text-secondary italic">Welcome Back</h2>
-            <p className="text-zinc-400 mt-2 font-medium">Access your Swastik account</p>
+            <p className="text-zinc-400 mt-2 font-medium">
+              {isClientProfileRedirect ? 'Sign in to access your profile form' : 'Access your Swastik account'}
+            </p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
@@ -129,13 +171,19 @@ const Login = () => {
             </div>
 
             <Button type="submit" variant="secondary" className="w-full py-5 text-lg shadow-xl shadow-secondary/20" disabled={loading}>
-              {loading ? 'Authenticating...' : 'Sign In'}
+              {loading ? 'Authenticating...' : isClientProfileRedirect ? 'Sign In & Continue to Form' : 'Sign In'}
             </Button>
           </form>
 
           <div className="mt-10 text-center text-sm font-medium text-zinc-400">
             Don't have an account? {' '}
-            <Link to="/signup" className="text-secondary font-black hover:underline underline-offset-4">Create Account</Link>
+            <Link 
+              to={redirectUrl ? `/signup?redirect=${encodeURIComponent(redirectUrl)}` : "/signup"} 
+              state={location.state}
+              className="text-secondary font-black hover:underline underline-offset-4"
+            >
+              Create Account
+            </Link>
           </div>
         </div>
       </motion.div>

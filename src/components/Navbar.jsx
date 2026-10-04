@@ -28,7 +28,12 @@ const Navbar = () => {
     { name: 'Properties', path: '/properties', icon: <Search size={18} /> },
     { name: 'About', path: '/about', icon: <Info size={18} /> },
     { name: 'Contact', path: '/contact', icon: <Phone size={18} /> },
-    {name:  'Client Profile', path: '/client-profile', icon: <User size={18} />},
+    { 
+      name: 'Client Profile', 
+      path: '/client-profile', 
+      targetPath: currentUser ? '/client-profile' : '/signup?redirect=/client-profile',
+      icon: <User size={18} /> 
+    },
   ];
 
   return (
@@ -41,15 +46,19 @@ const Navbar = () => {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center space-x-8">
-            {navLinks.map((link) => (
-              <Link 
-                key={link.name} 
-                to={link.path}
-                className={`text-sm font-bold transition-colors hover:text-secondary ${location.pathname === link.path ? 'text-secondary border-b-2 border-secondary' : 'text-zinc-600'}`}
-              >
-                {link.name}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const toPath = link.targetPath || link.path;
+              const isActive = location.pathname === link.path;
+              return (
+                <Link 
+                  key={link.name} 
+                  to={toPath}
+                  className={`text-sm font-bold transition-colors hover:text-secondary ${isActive ? 'text-secondary border-b-2 border-secondary' : 'text-zinc-600'}`}
+                >
+                  {link.name}
+                </Link>
+              );
+            })}
             
             {currentUser ? (
               <div className="flex items-center space-x-4">
@@ -88,17 +97,20 @@ const Navbar = () => {
       {/* Mobile Nav */}
       <div className={`md:hidden absolute w-full bg-white/95 backdrop-blur-xl transition-all duration-300 overflow-hidden ${isOpen ? 'max-h-[100vh] border-b border-secondary/10 shadow-xl' : 'max-h-0'}`}>
         <div className="flex flex-col p-6 space-y-6">
-          {navLinks.map((link) => (
-            <Link 
-              key={link.name} 
-              to={link.path} 
-              onClick={() => setIsOpen(false)}
-              className="flex items-center space-x-4 text-lg font-bold text-zinc-700 hover:text-secondary transition-colors"
-            >
-              <span className="text-secondary">{link.icon}</span>
-              <span>{link.name}</span>
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const toPath = link.targetPath || link.path;
+            return (
+              <Link 
+                key={link.name} 
+                to={toPath} 
+                onClick={() => setIsOpen(false)}
+                className="flex items-center space-x-4 text-lg font-bold text-zinc-700 hover:text-secondary transition-colors"
+              >
+                <span className="text-secondary">{link.icon}</span>
+                <span>{link.name}</span>
+              </Link>
+            );
+          })}
           <hr className="border-zinc-100" />
           {currentUser ? (
             <>

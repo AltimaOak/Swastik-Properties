@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db } from '../firebase/config';
 import { onAuthStateChanged } from 'firebase/auth';
-import { ref, get, child } from 'firebase/database';
+import { ref, onValue } from 'firebase/database';
 
 const AuthContext = createContext({
   currentUser: null,
@@ -19,26 +19,40 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    let unsubscribeDb = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (unsubscribeDb) {
+        unsubscribeDb();
+        unsubscribeDb = null;
+      }
+
       if (user) {
         setCurrentUser(user);
-        try {
-          // Attempt to get user data from Realtime Database
-          const userSnapshot = await get(child(ref(db), `users/${user.uid}`));
-          if (userSnapshot.exists()) {
-            setUserData(userSnapshot.val());
+        
+        // Listen to Realtime Database for live user profile updates
+        const userRef = ref(db, `users/${user.uid}`);
+        unsubscribeDb = onValue(userRef, (snapshot) => {
+          if (snapshot.exists()) {
+            setUserData(snapshot.val());
           } else {
-            // Fallback for users created before RTDB migration
-            setUserData({ role: 'agent', email: user.email, name: user.displayName || 'Agent' });
+            setUserData({
+              uid: user.uid,
+              role: 'buyer',
+              email: user.email,
+              name: user.displayName || ''
+            });
           }
-        } catch (error) {
+          setLoading(false);
+        }, (error) => {
           console.warn("Auth User Data Sync: ", error.message);
-        }
+          setLoading(false);
+        });
       } else {
         setCurrentUser(null);
         setUserData(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     // Safety timeout: Force load if Firebase is taking too long (e.g. network issues)
@@ -47,7 +61,8 @@ export const AuthProvider = ({ children }) => {
     }, 5000);
 
     return () => {
-      unsubscribe();
+      unsubscribeAuth();
+      if (unsubscribeDb) unsubscribeDb();
       clearTimeout(timeout);
     };
   }, []);

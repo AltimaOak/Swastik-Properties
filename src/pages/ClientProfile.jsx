@@ -1,11 +1,12 @@
 
 // src/pages/ClientProfile.jsx
 
-import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate, Navigate } from "react-router-dom";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
-import { push, ref, set } from "firebase/database";
+import { push, ref, set, get, child } from "firebase/database";
 import { db } from "../firebase/config";
+import { useAuth } from "../context/AuthContext";
 
 const initialForm = {
   name: "",
@@ -25,8 +26,11 @@ const initialForm = {
 export default function ClientProfile() {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const { currentUser, userData, loading: authLoading } = useAuth();
 
   const selectedProperty = state?.property || null;
+  const prefillName = state?.prefillName || state?.name || "";
+  const prefillEmail = state?.prefillEmail || state?.email || "";
 
   const selectedPropertyType =
     selectedProperty?.propertyType ||
@@ -43,8 +47,24 @@ export default function ClientProfile() {
       ? selectedProperty?.bhk || ""
       : "";
 
+  const initialName = 
+    prefillName || 
+    (userData?.name && userData.name !== 'Agent' ? userData.name : '') || 
+    (currentUser?.displayName && currentUser.displayName !== 'Agent' ? currentUser.displayName : '');
+
+  const initialEmail = 
+    prefillEmail || 
+    currentUser?.email || 
+    "";
+
   const [form, setForm] = useState({
     ...initialForm,
+
+    name:
+      initialName,
+
+    email:
+      initialEmail,
 
     location:
       selectedProperty?.location || "",
@@ -65,10 +85,74 @@ export default function ClientProfile() {
   const [error, setError] =
     useState("");
 
+  // Keep form name and email synced with authenticated account
+  useEffect(() => {
+    // 1. Direct state prefill takes highest precedence
+    if (state?.prefillName) {
+      setForm((prev) => ({
+        ...prev,
+        name: state.prefillName,
+        email: prev.email || state.prefillEmail || ""
+      }));
+    }
+
+    if (currentUser) {
+      const bestName = 
+        state?.prefillName ||
+        (userData?.name && userData.name !== 'Agent' ? userData.name : '') ||
+        (currentUser.displayName && currentUser.displayName !== 'Agent' ? currentUser.displayName : '');
+
+      setForm((prev) => {
+        const needsName = !prev.name || prev.name === 'Agent';
+        const needsEmail = !prev.email;
+
+        if (!needsName && !needsEmail) return prev;
+
+        return {
+          ...prev,
+          name: needsName ? (bestName || prev.name) : prev.name,
+          email: needsEmail ? (currentUser.email || prev.email) : prev.email
+        };
+      });
+
+      // 2. Extra safety: direct fetch from RTDB in case userData hasn't synchronized yet
+      if (!bestName) {
+        const userDbRef = child(ref(db), `users/${currentUser.uid}`);
+        get(userDbRef).then((snapshot) => {
+          if (snapshot.exists()) {
+            const val = snapshot.val();
+            if (val?.name && val.name !== 'Agent') {
+              setForm((prev) => ({
+                ...prev,
+                name: (!prev.name || prev.name === 'Agent') ? val.name : prev.name,
+                email: !prev.email ? (val.email || currentUser.email) : prev.email
+              }));
+            }
+          }
+        }).catch((err) => console.warn("Failed to fetch user record for name:", err));
+      }
+    }
+  }, [currentUser, userData, state]);
+
+  // Auth loading state
+  if (authLoading) {
+    return (
+      <div className="client-profile-page flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-zinc-100 border-t-secondary rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-secondary font-bold text-xs uppercase tracking-widest">Verifying Account...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is not authenticated, prompt for sign up first
+  if (!currentUser) {
+    return <Navigate to="/signup?redirect=/client-profile" replace state={state} />;
+  }
 
   const isFlat =
     form.propertyType === "Flat";
-
 
   const handleChange = (event) => {
     const { name, value } =
@@ -242,6 +326,17 @@ export default function ClientProfile() {
             selectedProperty?.price ||
             null,
 
+          userId:
+            currentUser?.uid || null,
+
+          buyerId:
+            currentUser?.uid || null,
+
+          userEmail:
+            currentUser?.email || form.email.trim(),
+
+          userRole:
+            userData?.role || "buyer",
 
           status:
             "new",
@@ -297,21 +392,33 @@ export default function ClientProfile() {
           </h1>
 
           <p>
-            Thank you for sharing your
+            Thank you, <strong>{form.name || "valued client"}</strong>, for sharing your
             property requirements with us.
             Our consultant will review your
             profile and contact you shortly.
           </p>
 
-          <button
-            type="button"
-            className="profile-primary-button"
-            onClick={() =>
-              navigate("/")
-            }
-          >
-            Back to Website
-          </button>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '20px' }}>
+            <button
+              type="button"
+              className="profile-primary-button"
+              onClick={() =>
+                navigate(userData?.role === 'agent' ? "/dashboard/agent" : "/dashboard/buyer")
+              }
+            >
+              Go to Dashboard
+            </button>
+            <button
+              type="button"
+              className="profile-primary-button"
+              style={{ background: '#f4f4f5', color: '#18181b', boxShadow: 'none' }}
+              onClick={() =>
+                navigate("/")
+              }
+            >
+              Back to Website
+            </button>
+          </div>
 
         </div>
 
@@ -417,7 +524,13 @@ export default function ClientProfile() {
                 </h2>
 
                 <p>
-                  Tell us how we can contact you.
+                  {currentUser?.email ? (
+                    <span>
+                      Logged in as <strong>{currentUser.email}</strong>. Details pre-filled from your account.
+                    </span>
+                  ) : (
+                    "Tell us how we can contact you."
+                  )}
                 </p>
 
               </div>
