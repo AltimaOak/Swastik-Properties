@@ -180,8 +180,9 @@ const Contact = () => {
                     required
                   />
                   <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-zinc-700">Message</label>
+                    <label htmlFor="contact-message" className="text-sm font-bold text-zinc-700">Message</label>
                     <textarea
+                      id="contact-message"
                       rows="6"
                       className="w-full bg-white border border-zinc-200 text-zinc-900 px-4 py-4 rounded-2xl focus:outline-none focus:border-secondary/50 transition-all placeholder:text-zinc-400 shadow-sm"
                       placeholder="How can we help you?"

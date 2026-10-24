@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Navigate } from "react-router-dom";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, FileText, Printer, Mail, X, Sparkles } from "lucide-react";
 import { push, ref, set, get, child } from "firebase/database";
 import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
+import emailjs from "@emailjs/browser";
 
 const initialForm = {
   name: "",
@@ -130,6 +131,18 @@ export default function ClientProfile() {
     useState(false);
 
   const [error, setError] =
+    useState("");
+
+  const [submittedData, setSubmittedData] =
+    useState(null);
+
+  const [showLetterheadModal, setShowLetterheadModal] =
+    useState(false);
+
+  const [emailStatus, setEmailStatus] =
+    useState("idle");
+
+  const [emailErrorMsg, setEmailErrorMsg] =
     useState("");
 
   // Keep form name and email synced with authenticated account
@@ -359,146 +372,196 @@ export default function ClientProfile() {
     setLoading(true);
 
     try {
+      const enquiryRef = push(ref(db, "inquiries"));
+      const referenceId = `SP-${Math.floor(100000 + Math.random() * 900000)}`;
+      const submissionDate = new Date().toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+      });
 
-      const enquiryRef =
-        push(
-          ref(db, "inquiries")
+      const preferredLocationStr = [
+        form.area === "Other" ? form.customArea.trim() : form.area,
+        form.city,
+        form.state,
+      ].filter(Boolean).join(", ");
+
+      const budgetDisplayStr = form.budgetMin || form.budgetMax
+        ? `₹${form.budgetMin || "0"} - ₹${form.budgetMax || "Open"}`
+        : "Flexible / Open";
+
+      const enquiryPayload = {
+        referenceId,
+        /* =========================
+           PERSONAL INFORMATION
+        ========================= */
+        name: form.name.trim(),
+        phone,
+        email: form.email.trim(),
+        state: form.state,
+        city: form.city,
+        area: form.area === "Other" ? form.customArea.trim() : form.area,
+        married: form.married,
+        wifeName: form.married === "Yes" ? form.wifeName.trim() : "",
+        children: form.married === "Yes" ? form.children.trim() : "",
+        parent: form.parent.trim(),
+        companyName: form.companyName.trim(),
+        jobRole: form.jobRole.trim(),
+        experience: form.experience.trim(),
+        jobLocation: form.jobLocation.trim(),
+        enquiryType: form.enquiryType,
+        propertyType: form.propertyType,
+        bhk: isFlat ? form.bhk : "",
+        preferredLocation: preferredLocationStr,
+        budget: form.budgetMin || form.budgetMax
+          ? `${form.budgetMin || "0"} - ${form.budgetMax || "No maximum"}`
+          : "",
+        budgetRange: {
+          minimum: form.budgetMin,
+          maximum: form.budgetMax,
+        },
+        possession: form.possession,
+        furnished: form.furnished,
+        parking: form.parking,
+        message: form.message.trim(),
+        propertyId: selectedProperty?.id || null,
+        propertyTitle: selectedProperty?.title || null,
+        propertyLocation: selectedProperty?.location || null,
+        propertyPrice: selectedProperty?.price || null,
+        userId: currentUser?.uid || null,
+        buyerId: currentUser?.uid || null,
+        userEmail: currentUser?.email || form.email.trim(),
+        userRole: userData?.role || "buyer",
+        status: "new",
+        source: "website-profile",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+
+      await set(enquiryRef, enquiryPayload);
+
+      // Formatted Letterhead text message for EmailJS
+      const letterheadTextMessage = `
+================================================================
+                    SWASTIK PROPERTIES
+                   BUY  |  SELL  |  RENT
+       EMAIL: swastik_prop@rediffmail.com
+       WEB: www.swastik-properties.co.in
+       MAHARERA Reg. No.: A031332601288
+================================================================
+
+ACKNOWLEDGEMENT OF CLIENT PROFILE & PROPERTY ENQUIRY
+Reference ID: ${referenceId}
+Date: ${submissionDate}
+
+To,
+${form.name.trim()}
+Email: ${form.email.trim()}
+Phone: ${phone}
+Location: ${preferredLocationStr || "Thane / Mumbai"}
+
+Subject: Acknowledgement for Client Profile Creation & Property Requirement Registration
+
+Dear ${form.name.trim()},
+
+We, at Swastik Properties, would like to express our sincere appreciation for creating your Client Profile and submitting your property requirement enquiry on our official website.
+
+Your requirements have been successfully registered in our verified client database. Below is the summary of your registered specifications:
+
+----------------------------------------------------------------
+REGISTERED REQUIREMENT SUMMARY:
+----------------------------------------------------------------
+• Reference No: ${referenceId}
+• Client Name: ${form.name.trim()}
+• Mobile Number: ${phone}
+• Email Address: ${form.email.trim()}
+• Enquiry Type: ${form.enquiryType || 'General Requirement'}
+• Property Type: ${form.propertyType || 'Flat'}${isFlat && form.bhk ? ` (${form.bhk})` : ''}
+• Preferred Location: ${preferredLocationStr || 'Flexible'}
+• Budget Range: ${budgetDisplayStr}
+• Possession: ${form.possession || 'Flexible'}
+• Furnishing: ${form.furnished || 'Any'}
+• Parking: ${form.parking || 'Any'}
+${form.message.trim() ? `• Specific Requirement: ${form.message.trim()}\n` : ''}----------------------------------------------------------------
+
+Our dedicated property consultant will review your specifications and contact you shortly with verified, tailored properties matching your requirements.
+
+We particularly appreciate your trust in Swastik Properties and look forward to assisting you in finding the ideal property.
+
+With sincere appreciation,
+
+Swastik Properties
+MAHARERA Reg. No.: A031332601288
+Place: Thane, Maharashtra
+Authorized Signature
+
+================================================================
+                  BUY  |  SELL  |  RENT
+    Swastik Properties | MAHARERA Reg. No.: A031332601288
+================================================================
+`.trim();
+
+      // Dispatch Email via EmailJS on behalf of Swastik Properties
+      const templateParams = {
+        // Common recipient variables
+        to_email: form.email.trim(),
+        email: form.email.trim(),
+        user_email: form.email.trim(),
+        client_email: form.email.trim(),
+        recipient_email: form.email.trim(),
+
+        // Recipient name variables
+        to_name: form.name.trim(),
+        name: form.name.trim(),
+        client_name: form.name.trim(),
+        user_name: form.name.trim(),
+
+        // Sender & Reply
+        from_name: 'Swastik Properties',
+        from_email: 'swastik_prop@rediffmail.com',
+        reply_to: 'swastik_prop@rediffmail.com',
+
+        // Subject & Content
+        subject: `Acknowledgement: Client Profile & Property Enquiry (${referenceId}) - Swastik Properties`,
+        message: letterheadTextMessage,
+        content: letterheadTextMessage,
+        html_message: letterheadTextMessage,
+
+        // Profile specific fields
+        client_phone: phone,
+        phone: phone,
+        reference_id: referenceId,
+        date: submissionDate,
+        enquiry_type: form.enquiryType || 'Requirement',
+        property_type: form.propertyType || 'Flat',
+        bhk: isFlat ? form.bhk : 'N/A',
+        location: preferredLocationStr || 'Not specified',
+        budget: budgetDisplayStr,
+        possession: form.possession || 'Flexible',
+      };
+
+      try {
+        const emailResponse = await emailjs.send(
+          import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_id',
+          import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_id',
+          templateParams,
+          import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'public_key'
         );
+        console.log("EmailJS Acknowledgement Sent:", emailResponse.status, emailResponse.text);
+        setEmailStatus("sent");
+        setEmailErrorMsg("");
+      } catch (emailErr) {
+        console.warn("Acknowledgement email dispatch notice:", emailErr);
+        setEmailStatus("failed");
+        const errMsg = emailErr?.text || emailErr?.message || "Email service unavailable";
+        setEmailErrorMsg(errMsg);
+      }
 
-      await set(
-        enquiryRef,
-        {
-          /* =========================
-             PERSONAL INFORMATION
-          ========================= */
-
-          name:
-            form.name.trim(),
-
-          phone,
-
-          email:
-            form.email.trim(),
-
-          state:
-            form.state,
-
-          city:
-            form.city,
-
-          area:
-            form.area === "Other"
-              ? form.customArea.trim()
-              : form.area,
-
-          married:
-            form.married,
-
-          wifeName:
-            form.married === "Yes" ? form.wifeName.trim() : "",
-
-          children:
-            form.married === "Yes" ? form.children.trim() : "",
-
-          parent:
-            form.parent.trim(),
-
-          companyName:
-            form.companyName.trim(),
-
-          jobRole:
-            form.jobRole.trim(),
-
-          experience:
-            form.experience.trim(),
-
-          jobLocation:
-            form.jobLocation.trim(),
-
-          enquiryType:
-            form.enquiryType,
-
-          propertyType:
-            form.propertyType,
-
-          bhk:
-            isFlat
-              ? form.bhk
-              : "",
-
-          preferredLocation:
-            [
-              form.area === "Other" ? form.customArea.trim() : form.area,
-              form.city,
-              form.state,
-            ]
-              .filter(Boolean)
-              .join(", "),
-
-          budget:
-            form.budgetMin || form.budgetMax
-              ? `${form.budgetMin || "0"} - ${form.budgetMax || "No maximum"}`
-              : "",
-
-          budgetRange: {
-            minimum: form.budgetMin,
-            maximum: form.budgetMax,
-          },
-
-          possession:
-            form.possession,
-
-          furnished:
-            form.furnished,
-
-          parking:
-            form.parking,
-
-          message:
-            form.message.trim(),
-
-
-          propertyId:
-            selectedProperty?.id ||
-            null,
-
-          propertyTitle:
-            selectedProperty?.title ||
-            null,
-
-          propertyLocation:
-            selectedProperty?.location ||
-            null,
-
-          propertyPrice:
-            selectedProperty?.price ||
-            null,
-
-          userId:
-            currentUser?.uid || null,
-
-          buyerId:
-            currentUser?.uid || null,
-
-          userEmail:
-            currentUser?.email || form.email.trim(),
-
-          userRole:
-            userData?.role || "buyer",
-
-          status:
-            "new",
-
-          source:
-            "website-profile",
-
-          createdAt:
-            Date.now(),
-
-          updatedAt:
-            Date.now(),
-        }
-      );
+      setSubmittedData({
+        ...enquiryPayload,
+        budgetDisplay: budgetDisplayStr,
+        submissionDate,
+      });
 
       setSubmitted(true);
 
@@ -536,26 +599,75 @@ export default function ClientProfile() {
           </p>
 
           <h1>
-            Enquiry Submitted
+            Profile & Enquiry Submitted
           </h1>
 
           <p>
-            Thank you, <strong>{form.name || "valued client"}</strong>, for sharing your
-            property requirements with us.
-            Our consultant will review your
-            profile and contact you shortly.
+            Thank you, <strong>{submittedData?.name || form.name || "valued client"}</strong>, for sharing your
+            property requirements with Swastik Properties.
+            Our consultant will review your specifications and contact you shortly.
           </p>
 
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '20px' }}>
+          {/* Email / Letterhead Confirmation Notice */}
+          {emailStatus === "sent" ? (
+            <div className="my-6 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-3 text-left">
+              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 shrink-0 mt-0.5">
+                <Mail size={20} />
+              </div>
+              <div>
+                <p className="text-xs font-black text-emerald-900 uppercase tracking-wider">
+                  Official Acknowledgement Email Dispatched
+                </p>
+                <p className="text-xs text-emerald-700 mt-0.5 leading-relaxed">
+                  An acknowledgement letter on official <strong>Swastik Properties</strong> letterhead has been emailed to <strong>{form.email}</strong>.
+                </p>
+                <p className="text-[11px] text-emerald-600/80 mt-1">
+                  (Note: Please check your Spam / Junk folder or Promotions tab if not seen in your Primary inbox.)
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="my-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 text-left">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-800 shrink-0 mt-0.5">
+                <FileText size={20} />
+              </div>
+              <div>
+                <p className="text-xs font-black text-amber-900 uppercase tracking-wider">
+                  Enquiry Registered • Official Letterhead Generated
+                </p>
+                <p className="text-xs text-amber-800 mt-0.5 leading-relaxed">
+                  Your requirements are registered in our database. Click below to view, print, or save your official <strong>Swastik Properties</strong> letterhead acknowledgement right now.
+                </p>
+                {emailErrorMsg && (
+                  <p className="text-[11px] text-amber-700 mt-1 font-mono bg-amber-100/70 px-2 py-1 rounded inline-block">
+                    Notice: {emailErrorMsg}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '24px' }}>
+            <button
+              type="button"
+              className="profile-primary-button flex items-center justify-center gap-2"
+              onClick={() => setShowLetterheadModal(true)}
+            >
+              <FileText size={16} />
+              View / Print Official Letterhead
+            </button>
+
             <button
               type="button"
               className="profile-primary-button"
+              style={{ background: '#7B1113', color: '#ffffff', boxShadow: 'none' }}
               onClick={() =>
                 navigate(userData?.role === 'agent' ? "/dashboard/agent" : "/dashboard/buyer")
               }
             >
               Go to Dashboard
             </button>
+
             <button
               type="button"
               className="profile-primary-button"
@@ -569,6 +681,224 @@ export default function ClientProfile() {
           </div>
 
         </div>
+
+        {/* =========================================================
+           OFFICIAL SWASTIK PROPERTIES LETTERHEAD MODAL
+        ========================================================= */}
+        {showLetterheadModal && submittedData && (
+          <div className="letterhead-modal-backdrop" onClick={() => setShowLetterheadModal(false)}>
+            <div 
+              className="letterhead-modal-content" 
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Control Bar (Excluded from Print) */}
+              <div className="no-print flex items-center justify-between px-6 py-4 border-b border-zinc-100 bg-zinc-50 rounded-t-2xl">
+                <div className="flex items-center gap-2">
+                  <FileText size={18} className="text-[#7B1113]" />
+                  <span className="font-bold text-sm text-zinc-800">
+                    Swastik Properties Official Letterhead
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="flex items-center gap-2 px-4 py-2 bg-[#7B1113] text-white rounded-xl text-xs font-bold hover:bg-red-950 transition shadow-sm cursor-pointer"
+                  >
+                    <Printer size={15} /> Print / Save PDF
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowLetterheadModal(false)}
+                    className="p-1.5 text-zinc-400 hover:text-zinc-700 rounded-full hover:bg-zinc-200 transition cursor-pointer"
+                    aria-label="Close"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Printable Letterhead Paper Sheet */}
+              <div className="printable-letterhead-card p-8 md:p-12 bg-white text-zinc-800 font-sans">
+                {/* Header matching provided document */}
+                <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <img 
+                      src="/logo.png" 
+                      alt="Swastik Properties Logo" 
+                      className="h-16 md:h-20 w-auto object-contain"
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                    <div>
+                      <h1 className="text-xl md:text-2xl font-black text-[#7B1113] tracking-wider uppercase font-serif">
+                        SWASTIK
+                      </h1>
+                      <p className="text-[10px] tracking-[0.3em] font-black text-zinc-500 uppercase -mt-1">
+                        — PROPERTIES —
+                      </p>
+                      <p className="text-[10px] tracking-[0.25em] font-black text-[#C59B27] uppercase mt-0.5">
+                        BUY | SELL | RENT
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-center sm:text-right text-xs text-zinc-600 space-y-1 font-medium">
+                    <div>
+                      <span className="font-black text-[#7B1113] tracking-widest text-[10px] uppercase mr-2">EMAIL</span>
+                      <a href="mailto:swastik_prop@rediffmail.com" className="text-zinc-700 hover:underline">
+                        swastik_prop@rediffmail.com
+                      </a>
+                    </div>
+                    <div>
+                      <span className="font-black text-[#7B1113] tracking-widest text-[10px] uppercase mr-2">WEB</span>
+                      <a href="https://www.swastik-properties.co.in" target="_blank" rel="noreferrer" className="text-zinc-700 hover:underline">
+                        www.swastik-properties.co.in
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Double colored accent line (Maroon + Gold) */}
+                <div className="my-6">
+                  <div className="h-1 bg-[#7B1113] w-full"></div>
+                  <div className="h-0.5 bg-[#C59B27] w-full mt-0.5"></div>
+                </div>
+
+                {/* Document Title */}
+                <div className="text-center my-6">
+                  <h2 className="text-base md:text-lg font-black text-zinc-900 tracking-wider uppercase">
+                    LETTER OF ACKNOWLEDGEMENT
+                  </h2>
+                  <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mt-1">
+                    Client Profile & Property Enquiry Registration
+                  </p>
+                </div>
+
+                {/* Reference ID & Date bar */}
+                <div className="flex justify-between items-center text-xs text-zinc-500 mb-6 pb-2 border-b border-zinc-100">
+                  <span>Ref No: <strong className="text-zinc-900">{submittedData.referenceId}</strong></span>
+                  <span>Date: <strong className="text-zinc-900">{submittedData.submissionDate}</strong></span>
+                </div>
+
+                {/* Recipient Details */}
+                <div className="text-xs md:text-sm text-zinc-700 space-y-1 mb-6">
+                  <p className="font-bold text-zinc-900">To,</p>
+                  <p className="font-black text-zinc-900 text-base">{submittedData.name}</p>
+                  <p><span className="text-zinc-500">Mobile:</span> {submittedData.phone}</p>
+                  <p><span className="text-zinc-500">Email:</span> {submittedData.email}</p>
+                  {submittedData.preferredLocation && (
+                    <p><span className="text-zinc-500">Location:</span> {submittedData.preferredLocation}</p>
+                  )}
+                </div>
+
+                {/* Subject */}
+                <div className="bg-amber-50/70 border border-amber-200/60 p-3 rounded-lg text-xs md:text-sm font-bold text-zinc-900 mb-6">
+                  Subject: Acknowledgement for Client Profile Creation & Property Requirement Registration
+                </div>
+
+                {/* Salutation & Body matching the letterhead in image */}
+                <div className="text-xs md:text-sm text-zinc-700 leading-relaxed space-y-3.5">
+                  <p>Dear <strong>{submittedData.name}</strong>,</p>
+
+                  <p>
+                    We, at <strong>Swastik Properties</strong>, would like to express our sincere appreciation for creating your Client Profile and submitting your property requirement enquiry on our official website.
+                  </p>
+
+                  <p>
+                    The requirements you have shared have been successfully registered in our verified client database. Our dedicated property consultants are reviewing your preferences and will reach out to you shortly with verified, high-matching options that effectively represent the standards and quality of <strong>Swastik Properties</strong>.
+                  </p>
+
+                  {/* Registered Requirement Summary Box */}
+                  <div className="my-5 bg-zinc-50/80 rounded-xl p-4 md:p-5 border border-zinc-200">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-[#7B1113] mb-3 pb-1.5 border-b border-zinc-200">
+                      Registered Requirement Summary
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5 text-xs">
+                      <div>
+                        <span className="text-zinc-500 font-medium">Reference ID:</span>{' '}
+                        <strong className="text-zinc-900">{submittedData.referenceId}</strong>
+                      </div>
+                      <div>
+                        <span className="text-zinc-500 font-medium">Enquiry Type:</span>{' '}
+                        <strong className="text-zinc-900">{submittedData.enquiryType || 'General Enquiry'}</strong>
+                      </div>
+                      <div>
+                        <span className="text-zinc-500 font-medium">Property Type:</span>{' '}
+                        <strong className="text-zinc-900">
+                          {submittedData.propertyType} {submittedData.bhk ? `(${submittedData.bhk})` : ''}
+                        </strong>
+                      </div>
+                      <div>
+                        <span className="text-zinc-500 font-medium">Preferred Location:</span>{' '}
+                        <strong className="text-zinc-900">{submittedData.preferredLocation || 'Thane / Mumbai'}</strong>
+                      </div>
+                      <div>
+                        <span className="text-zinc-500 font-medium">Budget Range:</span>{' '}
+                        <strong className="text-zinc-900">{submittedData.budgetDisplay}</strong>
+                      </div>
+                      <div>
+                        <span className="text-zinc-500 font-medium">Possession Status:</span>{' '}
+                        <strong className="text-zinc-900">{submittedData.possession || 'Flexible'}</strong>
+                      </div>
+                      <div>
+                        <span className="text-zinc-500 font-medium">Furnishing Status:</span>{' '}
+                        <strong className="text-zinc-900">{submittedData.furnished || 'Any'}</strong>
+                      </div>
+                      <div>
+                        <span className="text-zinc-500 font-medium">Parking Requirement:</span>{' '}
+                        <strong className="text-zinc-900">{submittedData.parking || 'Any'}</strong>
+                      </div>
+                    </div>
+                    {submittedData.message && (
+                      <div className="mt-3 pt-2.5 border-t border-zinc-200 text-xs">
+                        <span className="text-zinc-500 font-medium">Client Note:</span>{' '}
+                        <span className="text-zinc-800 italic">"{submittedData.message}"</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <p>
+                    We particularly appreciate your trust in Swastik Properties and assure you of our complete commitment, transparency, and assistance throughout your property search process.
+                  </p>
+
+                  <p>
+                    For any immediate assistance or enquiries, feel free to contact our team at <strong>swastik_prop@rediffmail.com</strong> or visit <strong>www.swastik-properties.co.in</strong>.
+                  </p>
+                </div>
+
+                {/* Sign-off section */}
+                <div className="mt-8 pt-6 border-t border-zinc-200 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 text-xs md:text-sm text-zinc-700">
+                  <div>
+                    <p className="font-semibold text-zinc-800">With sincere appreciation,</p>
+                    <p className="font-black text-[#7B1113] text-base mt-1">Swastik Properties</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      MAHARERA Reg. No.: <strong className="text-zinc-700">A031332601288</strong>
+                    </p>
+                    <p className="text-xs text-zinc-500 mt-2">
+                      Place: <strong>Thane, Maharashtra</strong>
+                    </p>
+                  </div>
+                  <div className="text-center sm:text-right">
+                    <div className="h-10 border-b border-dashed border-zinc-400 w-44 mb-1 mx-auto sm:ml-auto"></div>
+                    <p className="text-[11px] font-bold text-zinc-600 uppercase tracking-wider">
+                      Authorized Signature
+                    </p>
+                  </div>
+                </div>
+
+                {/* Footer matching PDF */}
+                <div className="mt-10 pt-4 border-t-2 border-zinc-200 text-center">
+                  <p className="text-xs font-black tracking-[0.3em] text-zinc-800 uppercase">
+                    BUY  |  SELL  |  RENT
+                  </p>
+                  <p className="text-[11px] text-zinc-500 mt-1">
+                    Swastik Properties | MAHARERA Reg. No.: A031332601288
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     );
@@ -692,11 +1022,12 @@ export default function ClientProfile() {
 
               <div className="profile-field">
 
-                <label>
+                <label htmlFor="client-name">
                   Full Name *
                 </label>
 
                 <input
+                  id="client-name"
                   type="text"
                   name="name"
                   value={form.name}
@@ -712,11 +1043,12 @@ export default function ClientProfile() {
 
               <div className="profile-field">
 
-                <label>
+                <label htmlFor="client-phone">
                   Mobile Number *
                 </label>
 
                 <input
+                  id="client-phone"
                   type="tel"
                   name="phone"
                   value={form.phone}
@@ -734,11 +1066,12 @@ export default function ClientProfile() {
 
               <div className="profile-field">
 
-                <label>
+                <label htmlFor="client-email">
                   Email Address
                 </label>
 
                 <input
+                  id="client-email"
                   type="email"
                   name="email"
                   value={form.email}
@@ -753,11 +1086,12 @@ export default function ClientProfile() {
 
               <div className="profile-field">
 
-                <label>
+                <label htmlFor="client-married">
                   Married
                 </label>
 
                 <select
+                  id="client-married"
                   name="married"
                   value={form.married}
                   onChange={handleChange}
@@ -785,11 +1119,12 @@ export default function ClientProfile() {
 
                   <div className="profile-field">
 
-                    <label>
+                    <label htmlFor="client-wifeName">
                       Wife Name
                     </label>
 
                     <input
+                      id="client-wifeName"
                       type="text"
                       name="wifeName"
                       value={form.wifeName}
@@ -803,11 +1138,12 @@ export default function ClientProfile() {
 
                   <div className="profile-field">
 
-                    <label>
+                    <label htmlFor="client-children">
                       Children
                     </label>
 
                     <input
+                      id="client-children"
                       type="text"
                       name="children"
                       value={form.children}
@@ -823,11 +1159,12 @@ export default function ClientProfile() {
 
               <div className="profile-field">
 
-                <label>
+                <label htmlFor="client-parent">
                   Parent
                 </label>
 
                 <input
+                  id="client-parent"
                   type="text"
                   name="parent"
                   value={form.parent}
@@ -841,16 +1178,18 @@ export default function ClientProfile() {
 
               <div className="profile-field">
 
-                <label>
+                <label htmlFor="client-companyName">
                   Company Name
                 </label>
 
                 <input
+                  id="client-companyName"
                   type="text"
                   name="companyName"
                   value={form.companyName}
                   onChange={handleChange}
                   placeholder="Enter company name"
+                  autoComplete="organization"
                 />
 
               </div>
@@ -859,16 +1198,18 @@ export default function ClientProfile() {
 
               <div className="profile-field">
 
-                <label>
+                <label htmlFor="client-jobRole">
                   Job Role
                 </label>
 
                 <input
+                  id="client-jobRole"
                   type="text"
                   name="jobRole"
                   value={form.jobRole}
                   onChange={handleChange}
                   placeholder="Enter job role"
+                  autoComplete="organization-title"
                 />
 
               </div>
@@ -877,11 +1218,12 @@ export default function ClientProfile() {
 
               <div className="profile-field">
 
-                <label>
+                <label htmlFor="client-experience">
                   Experience
                 </label>
 
                 <input
+                  id="client-experience"
                   type="text"
                   name="experience"
                   value={form.experience}
@@ -895,11 +1237,12 @@ export default function ClientProfile() {
 
               <div className="profile-field">
 
-                <label>
+                <label htmlFor="client-jobLocation">
                   Job Location
                 </label>
 
                 <input
+                  id="client-jobLocation"
                   type="text"
                   name="jobLocation"
                   value={form.jobLocation}
@@ -948,11 +1291,12 @@ export default function ClientProfile() {
 
               <div className="profile-field">
 
-                <label>
+                <label htmlFor="client-enquiryType">
                   Looking To
                 </label>
 
                 <select
+                  id="client-enquiryType"
                   name="enquiryType"
                   value={form.enquiryType}
                   onChange={handleChange}
@@ -985,11 +1329,12 @@ export default function ClientProfile() {
 
               <div className="profile-field">
 
-                <label>
+                <label htmlFor="client-propertyType">
                   Property Type
                 </label>
 
                 <select
+                  id="client-propertyType"
                   name="propertyType"
                   value={form.propertyType}
                   onChange={handleChange}
@@ -1019,11 +1364,12 @@ export default function ClientProfile() {
               {isFlat && (
                 <div className="profile-field">
 
-                  <label>
+                  <label htmlFor="client-bhk">
                     Configuration
                   </label>
 
                   <select
+                    id="client-bhk"
                     name="bhk"
                     value={form.bhk}
                     onChange={handleChange}
@@ -1060,11 +1406,12 @@ export default function ClientProfile() {
 
               <div className="profile-field">
 
-                <label>
+                <label htmlFor="client-state">
                   State
                 </label>
 
                 <select
+                  id="client-state"
                   name="state"
                   value={form.state}
                   onChange={handleChange}
@@ -1077,11 +1424,12 @@ export default function ClientProfile() {
 
               <div className="profile-field">
 
-                <label>
+                <label htmlFor="client-city">
                   City
                 </label>
 
                 <select
+                  id="client-city"
                   name="city"
                   value={form.city}
                   onChange={handleChange}
@@ -1101,11 +1449,12 @@ export default function ClientProfile() {
 
               <div className="profile-field">
 
-                <label>
+                <label htmlFor="client-area">
                   Area
                 </label>
 
                 <select
+                  id="client-area"
                   name="area"
                   value={form.area}
                   onChange={handleChange}
@@ -1124,11 +1473,12 @@ export default function ClientProfile() {
               {form.area === "Other" && (
                 <div className="profile-field">
 
-                  <label>
+                  <label htmlFor="client-customArea">
                     Enter Area
                   </label>
 
                   <input
+                    id="client-customArea"
                     type="text"
                     name="customArea"
                     value={form.customArea}
@@ -1145,34 +1495,46 @@ export default function ClientProfile() {
 
               <div className="profile-field">
 
-                <label>
-                  Budget Range
+                <label htmlFor="client-budgetMin">
+                  Budget Range (INR)
                 </label>
 
                 <div className="profile-form-grid">
-                  <input
-                    type="number"
-                    name="budgetMin"
-                    value={form.budgetMin}
-                    onChange={handleChange}
-                    placeholder="Minimum budget"
-                    min="0"
-                    max={MAX_BUDGET}
-                    step="10000"
-                    aria-label="Minimum budget in rupees"
-                  />
+                  <div>
+                    <label htmlFor="client-budgetMin" style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>
+                      Minimum Budget
+                    </label>
+                    <input
+                      id="client-budgetMin"
+                      type="number"
+                      name="budgetMin"
+                      value={form.budgetMin}
+                      onChange={handleChange}
+                      placeholder="Minimum budget"
+                      min="0"
+                      max={MAX_BUDGET}
+                      step="10000"
+                      aria-label="Minimum budget in rupees"
+                    />
+                  </div>
 
-                  <input
-                    type="number"
-                    name="budgetMax"
-                    value={form.budgetMax}
-                    onChange={handleChange}
-                    placeholder="Maximum budget"
-                    min="0"
-                    max={MAX_BUDGET}
-                    step="10000"
-                    aria-label="Maximum budget in rupees"
-                  />
+                  <div>
+                    <label htmlFor="client-budgetMax" style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>
+                      Maximum Budget
+                    </label>
+                    <input
+                      id="client-budgetMax"
+                      type="number"
+                      name="budgetMax"
+                      value={form.budgetMax}
+                      onChange={handleChange}
+                      placeholder="Maximum budget"
+                      min="0"
+                      max={MAX_BUDGET}
+                      step="10000"
+                      aria-label="Maximum budget in rupees"
+                    />
+                  </div>
                 </div>
 
               </div>
@@ -1183,11 +1545,12 @@ export default function ClientProfile() {
 
               <div className="profile-field">
 
-                <label>
+                <label htmlFor="client-possession">
                   Possession
                 </label>
 
                 <select
+                  id="client-possession"
                   name="possession"
                   value={form.possession}
                   onChange={handleChange}
@@ -1223,11 +1586,12 @@ export default function ClientProfile() {
 
               <div className="profile-field">
 
-                <label>
+                <label htmlFor="client-furnished">
                   Furnishing
                 </label>
 
                 <select
+                  id="client-furnished"
                   name="furnished"
                   value={form.furnished}
                   onChange={handleChange}
@@ -1259,11 +1623,12 @@ export default function ClientProfile() {
 
               <div className="profile-field">
 
-                <label>
+                <label htmlFor="client-parking">
                   Parking
                 </label>
 
                 <select
+                  id="client-parking"
                   name="parking"
                   value={form.parking}
                   onChange={handleChange}
@@ -1317,11 +1682,12 @@ export default function ClientProfile() {
 
             <div className="profile-field">
 
-              <label>
+              <label htmlFor="client-message">
                 Your Requirement
               </label>
 
               <textarea
+                id="client-message"
                 name="message"
                 value={form.message}
                 onChange={handleChange}

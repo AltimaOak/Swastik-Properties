@@ -556,8 +556,9 @@ const AgentDashboard = () => {
                     )}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Type</label>
+                        <label htmlFor="agent-prop-type" className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Type</label>
                         <select 
+                          id="agent-prop-type"
                           className="w-full bg-zinc-50 border border-zinc-200 text-secondary px-4 py-3.5 rounded-2xl focus:outline-none focus:border-secondary shadow-sm font-bold"
                           value={formData.type}
                           onChange={(e) => setFormData({...formData, type: e.target.value})}
@@ -570,8 +571,9 @@ const AgentDashboard = () => {
                         </select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Purpose</label>
+                        <label htmlFor="agent-prop-purpose" className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Purpose</label>
                         <select 
+                          id="agent-prop-purpose"
                           className="w-full bg-zinc-50 border border-zinc-200 text-secondary px-4 py-3.5 rounded-2xl focus:outline-none focus:border-secondary shadow-sm font-bold"
                           value={formData.purpose || 'Buy'}
                           onChange={(e) => setFormData({...formData, purpose: e.target.value})}
@@ -625,8 +627,9 @@ const AgentDashboard = () => {
 
                   {!formData.underConstruction ? (
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">BHK / Rooms</label>
+                      <label htmlFor="agent-prop-bhk" className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">BHK / Rooms</label>
                       <select 
+                        id="agent-prop-bhk"
                         className="w-full bg-zinc-50 border border-zinc-200 text-secondary px-4 py-3.5 rounded-2xl focus:outline-none focus:border-secondary shadow-sm font-bold"
                         value={formData.bhk}
                         onChange={(e) => setFormData({...formData, bhk: e.target.value})}
@@ -707,8 +710,9 @@ const AgentDashboard = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Description</label>
+                  <label htmlFor="agent-prop-desc" className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Description</label>
                   <textarea 
+                    id="agent-prop-desc"
                     rows="5"
                     className="w-full bg-zinc-50 border border-zinc-200 text-secondary px-5 py-4 rounded-[2rem] focus:outline-none focus:border-secondary transition-all placeholder:text-zinc-300 shadow-sm font-medium"
                     placeholder="Describe the property highlights..."

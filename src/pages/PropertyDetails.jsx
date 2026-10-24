@@ -431,8 +431,9 @@ const PropertyDetails = () => {
                     required
                   />
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-zinc-700">Message</label>
+                    <label htmlFor="property-inquiry-message" className="text-sm font-bold text-zinc-700">Message</label>
                     <textarea 
+                      id="property-inquiry-message"
                       rows="5"
                       className="w-full bg-zinc-50 border border-zinc-200 text-zinc-900 px-4 py-4 rounded-2xl focus:outline-none focus:border-secondary transition-all placeholder:text-zinc-400 shadow-sm"
                       placeholder="I'm interested in this property..."

@@ -660,3 +660,56 @@
   }
 
 }
+
+/* =========================================================
+   LETTERHEAD MODAL & PRINT STYLES
+========================================================= */
+
+.letterhead-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px;
+  overflow-y: auto;
+}
+
+.letterhead-modal-content {
+  background: #ffffff;
+  color: #18181b;
+  width: min(850px, 100%);
+  max-height: 92vh;
+  overflow-y: auto;
+  border-radius: 20px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.4);
+  position: relative;
+}
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  .printable-letterhead-card,
+  .printable-letterhead-card * {
+    visibility: visible !important;
+  }
+  .printable-letterhead-card {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 25px 30px !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

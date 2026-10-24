@@ -169,8 +169,9 @@ const Properties = () => {
                 </button>
                 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary/50">Property Type</label>
+                  <label htmlFor="filter-type" className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary/50">Property Type</label>
                   <select 
+                    id="filter-type"
                     name="type" 
                     value={filters.type}
                     onChange={handleFilterChange}
@@ -185,8 +186,9 @@ const Properties = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary/50">Purpose</label>
+                  <label htmlFor="filter-purpose" className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary/50">Purpose</label>
                   <select 
+                    id="filter-purpose"
                     name="purpose" 
                     value={filters.purpose}
                     onChange={handleFilterChange}
@@ -200,8 +202,9 @@ const Properties = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary/50">Min Price</label>
+                  <label htmlFor="filter-minPrice" className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary/50">Min Price</label>
                   <Input 
+                    id="filter-minPrice"
                     type="number" 
                     name="minPrice" 
                     placeholder="e.g. 500,000" 
@@ -211,8 +214,9 @@ const Properties = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary/50">Max Price</label>
+                  <label htmlFor="filter-maxPrice" className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary/50">Max Price</label>
                   <Input 
+                    id="filter-maxPrice"
                     type="number" 
                     name="maxPrice" 
                     placeholder="e.g. 10,000,000" 
@@ -222,8 +226,9 @@ const Properties = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary/50">BHK / Rooms</label>
+                  <label htmlFor="filter-bhk" className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary/50">BHK / Rooms</label>
                   <select 
+                    id="filter-bhk"
                     name="bhk" 
                     value={filters.bhk}
                     onChange={handleFilterChange}
