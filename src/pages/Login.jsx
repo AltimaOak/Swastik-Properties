@@ -31,12 +31,14 @@ const Login = () => {
       
       // Fetch user data from DB to redirect properly and carry user name
       let fetchedName = '';
+      let fetchedPhone = '';
       let role = 'buyer';
       try {
         const userSnapshot = await get(child(ref(db), `users/${userCredential.user.uid}`));
         if (userSnapshot.exists()) {
           const val = userSnapshot.val();
           fetchedName = val.name || '';
+          fetchedPhone = val.phone || '';
           role = val.role || 'buyer';
         }
       } catch (err) {
@@ -49,7 +51,8 @@ const Login = () => {
           state: { 
             ...(location.state || {}),
             prefillName: fetchedName || userCredential.user.displayName || '',
-            prefillEmail: userCredential.user.email 
+            prefillEmail: userCredential.user.email,
+            prefillPhone: fetchedPhone
           } 
         });
         return;
@@ -94,15 +97,15 @@ const Login = () => {
         className="w-full max-w-md px-6 relative z-10"
       >
         <div className="bg-white border border-zinc-100 p-8 md:p-10 rounded-[3rem] shadow-premium">
-          {/* Client Profile Indicator Banner */}
+          {/* Enquiry Form Indicator Banner */}
           {isClientProfileRedirect && (
             <div className="mb-8 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/80 p-5 rounded-2xl text-center shadow-sm">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary text-white text-[10px] font-black uppercase tracking-widest rounded-full mb-2">
                 <Sparkles size={12} className="text-primary" />
-                <span>Client Profile Access</span>
+                <span>Enquiry Form Access</span>
               </div>
               <h3 className="text-base font-black text-secondary">
-                Sign In to Continue to Client Profile
+                Sign In to Continue to Enquiry Form
               </h3>
               <p className="text-xs text-zinc-600 mt-1.5 leading-relaxed">
                 Log in to submit and track your property requirements with Swastik Properties.
@@ -116,7 +119,7 @@ const Login = () => {
             </div>
             <h2 className="text-3xl font-black text-secondary italic">Welcome Back</h2>
             <p className="text-zinc-400 mt-2 font-medium">
-              {isClientProfileRedirect ? 'Sign in to access your profile form' : 'Access your Swastik account'}
+              {isClientProfileRedirect ? 'Sign in to continue to the enquiry form' : 'Access your Swastik account'}
             </p>
           </div>
 

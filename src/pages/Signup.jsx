@@ -6,14 +6,14 @@ import { ref, set } from 'firebase/database';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import { motion } from 'framer-motion';
-import { UserPlus, User, Mail, Lock, AlertCircle, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { UserPlus, User, Mail, Phone, Lock, AlertCircle, Eye, EyeOff, Sparkles } from 'lucide-react';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    role: 'buyer' // default role
+    phone: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -26,13 +26,23 @@ const Signup = () => {
   const isClientProfileRedirect = redirectUrl === '/client-profile';
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: name === 'phone' ? value.replace(/\D/g, '').slice(0, 10) : value
+    });
   };
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+
+    if (!/^[6-9]\d{9}$/.test(formData.phone)) {
+      setError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
@@ -51,7 +61,8 @@ const Signup = () => {
           uid: user.uid,
           name: formData.name.trim(),
           email: formData.email.trim(),
-          role: formData.role,
+          phone: formData.phone || '',
+          role: 'buyer',
           createdAt: new Date().toISOString()
         });
       } catch (e) {
@@ -64,11 +75,10 @@ const Signup = () => {
           state: { 
             ...(location.state || {}),
             prefillName: formData.name.trim(),
-            prefillEmail: formData.email.trim()
+            prefillEmail: formData.email.trim(),
+            prefillPhone: formData.phone
           } 
         });
-      } else if (formData.role === 'agent') {
-        navigate('/dashboard/agent');
       } else {
         navigate('/dashboard/buyer');
       }
@@ -91,7 +101,7 @@ const Signup = () => {
         className="w-full max-w-md px-6 relative z-10"
       >
         <div className="bg-white border border-zinc-100 p-8 md:p-10 rounded-[3rem] shadow-premium">
-          {/* Client Profile Step 1 Indicator Banner */}
+          {/* Enquiry Form Step 1 Indicator Banner */}
           {isClientProfileRedirect && (
             <div className="mb-8 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/80 p-5 rounded-2xl text-center shadow-sm">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary text-white text-[10px] font-black uppercase tracking-widest rounded-full mb-2">
@@ -99,7 +109,7 @@ const Signup = () => {
                 <span>Step 1 of 2</span>
               </div>
               <h3 className="text-base font-black text-secondary">
-                Create Account to Fill Client Profile
+                Create Account to Fill Enquiry Form
               </h3>
               <p className="text-xs text-zinc-600 mt-1.5 leading-relaxed">
                 Please create your account first. Once signed up, you'll immediately fill out your property requirements and connect with our consultants.
@@ -113,7 +123,7 @@ const Signup = () => {
             </div>
             <h2 className="text-3xl font-black text-secondary italic">Create Account</h2>
             <p className="text-zinc-400 mt-2 font-medium">
-              {isClientProfileRedirect ? 'Join to submit your property requirement' : 'Join the Swastik family today'}
+              {isClientProfileRedirect ? 'Join to submit your enquiry' : 'Join the Swastik family today'}
             </p>
           </div>
 
@@ -152,6 +162,22 @@ const Signup = () => {
               </div>
 
               <div className="relative">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                <Input
+                  name="phone"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  placeholder="Mobile Number"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="pl-12"
+                  maxLength={10}
+                  required
+                />
+              </div>
+
+              <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
                 <Input 
                   name="password"
@@ -169,26 +195,6 @@ const Signup = () => {
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-widest text-secondary/40 ml-1">Join as:</label>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, role: 'buyer' })}
-                  className={`py-4 rounded-2xl border text-sm font-black uppercase tracking-widest transition-all ${formData.role === 'buyer' ? 'bg-secondary text-white border-secondary shadow-lg shadow-secondary/20' : 'bg-white text-zinc-400 border-zinc-100 hover:border-zinc-200'}`}
-                >
-                  Buyer
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, role: 'agent' })}
-                  className={`py-4 rounded-2xl border text-sm font-black uppercase tracking-widest transition-all ${formData.role === 'agent' ? 'bg-secondary text-white border-secondary shadow-lg shadow-secondary/20' : 'bg-white text-zinc-400 border-zinc-100 hover:border-zinc-200'}`}
-                >
-                  Agent
                 </button>
               </div>
             </div>

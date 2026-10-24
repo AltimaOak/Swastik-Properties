@@ -1,29 +1,86 @@
 {
   "rules": {
     "properties": {
-      ".read": "true",
+      ".read": true,
+      ".indexOn": [
+        "status",
+        "propertyType",
+        "type",
+        "bhk",
+        "location"
+      ],
       "$propertyId": {
-        ".write": "auth !== null && (!data.exists() || data.child('agentId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'agent')"
+        ".write": "auth != null && (!data.exists() || data.child('agentId').val() == auth.uid || root.child('users').child(auth.uid).child('role').val() == 'agent' || root.child('admins').child(auth.uid).val() == true)"
       }
     },
     "users": {
+      ".read": "auth != null",
       "$uid": {
-        ".read": "auth !== null",
-        ".write": "auth !== null && auth.uid === $uid"
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid == $uid && (!data.exists() || newData.child('role').val() == data.child('role').val())"
       }
     },
     "inquiries": {
-      ".read": "auth !== null && root.child('users').child(auth.uid).child('role').val() === 'agent'",
+      ".read": "auth != null && (root.child('admins').child(auth.uid).val() == true || root.child('users').child(auth.uid).child('role').val() == 'agent' || (query.orderByChild == 'buyerId' && query.equalTo == auth.uid))",
+      ".indexOn": ["buyerId", "agentId"],
       "$inquiryId": {
-        ".read": "auth !== null && (data.child('buyerId').val() === auth.uid || data.child('agentId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'agent')",
-        ".write": "auth !== null"
+        ".read": "auth != null && (data.child('buyerId').val() == auth.uid || data.child('agentId').val() == auth.uid || root.child('admins').child(auth.uid).val() == true || root.child('users').child(auth.uid).child('role').val() == 'agent')",
+        ".write": "auth != null"
       }
     },
     "contact_messages": {
       "$messageId": {
-        ".read": "auth !== null && root.child('users').child(auth.uid).child('role').val() === 'agent'",
-        ".write": "true"
+        ".read": "auth != null && (root.child('admins').child(auth.uid).val() == true || root.child('users').child(auth.uid).child('role').val() == 'agent')",
+        ".write": true
       }
+    },
+    "enquiries": {
+      ".read": "auth != null",
+      ".indexOn": [
+        "createdAt",
+        "status",
+        "enquiryType",
+        "propertyType",
+        "preferredLocation"
+      ],
+      "$enquiryId": {
+        ".write": "auth != null || !data.exists()",
+        ".validate": "(!data.exists() && newData.hasChildren(['name','phone','enquiryType','propertyType','status','source','createdAt']) && newData.child('name').isString() && newData.child('phone').isString() && newData.child('enquiryType').isString() && newData.child('propertyType').isString() && newData.child('status').val() == 'new' && newData.child('source').val() == 'website-profile' && newData.child('name').val().length <= 100 && newData.child('phone').val().length <= 15) || auth != null"
+      }
+    },
+    "clients": {
+      ".read": "auth != null && (root.child('admins').child(auth.uid).val() == true || root.child('users').child(auth.uid).child('role').val() == 'agent')",
+      ".write": "auth != null && (root.child('admins').child(auth.uid).val() == true || root.child('users').child(auth.uid).child('role').val() == 'agent')",
+      ".indexOn": [
+        "enquiryId",
+        "phone",
+        "status",
+        "createdAt"
+      ]
+    },
+    "followups": {
+      ".read": "auth != null && (root.child('admins').child(auth.uid).val() == true || root.child('users').child(auth.uid).child('role').val() == 'agent')",
+      ".write": "auth != null && (root.child('admins').child(auth.uid).val() == true || root.child('users').child(auth.uid).child('role').val() == 'agent')",
+      ".indexOn": [
+        "clientId",
+        "enquiryId",
+        "status",
+        "date",
+        "createdAt"
+      ]
+    },
+    "sentPropertyMatches": {
+      ".read": "auth != null && (root.child('admins').child(auth.uid).val() == true || root.child('users').child(auth.uid).child('role').val() == 'agent')",
+      ".write": "auth != null && (root.child('admins').child(auth.uid).val() == true || root.child('users').child(auth.uid).child('role').val() == 'agent')",
+      ".indexOn": [
+        "enquiryId",
+        "sentBy",
+        "sentAt"
+      ]
+    },
+    "admins": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() == true",
+      ".write": false
     }
   }
 }

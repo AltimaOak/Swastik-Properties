@@ -29,7 +29,7 @@ const Navbar = () => {
     { name: 'About', path: '/about', icon: <Info size={18} /> },
     { name: 'Contact', path: '/contact', icon: <Phone size={18} /> },
     { 
-      name: 'Client Profile', 
+      name: 'Enquiry Form', 
       path: '/client-profile', 
       targetPath: currentUser ? '/client-profile' : '/signup?redirect=/client-profile',
       icon: <User size={18} /> 

@@ -1,6 +1,3 @@
-
-// src/pages/ClientProfile.jsx
-
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Navigate } from "react-router-dom";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
@@ -12,16 +9,30 @@ const initialForm = {
   name: "",
   phone: "",
   email: "",
+  state: "",
+  city: "",
+  area: "",
+  customArea: "",
+  married: "",
+  wifeName: "",
+  children: "",
+  budgetMin: "",
+  budgetMax: "",
+  parent: "",
+  companyName: "",
+  jobRole: "",
+  experience: "",
+  jobLocation: "",
   enquiryType: "",
   propertyType: "",
   bhk: "",
-  location: "",
-  budget: "",
   possession: "",
   furnished: "",
   parking: "",
   message: "",
 };
+
+const MAX_BUDGET = 10000000;
 
 export default function ClientProfile() {
   const navigate = useNavigate();
@@ -31,6 +42,7 @@ export default function ClientProfile() {
   const selectedProperty = state?.property || null;
   const prefillName = state?.prefillName || state?.name || "";
   const prefillEmail = state?.prefillEmail || state?.email || "";
+  const prefillPhone = state?.prefillPhone || "";
 
   const selectedPropertyType =
     selectedProperty?.propertyType ||
@@ -47,14 +59,49 @@ export default function ClientProfile() {
       ? selectedProperty?.bhk || ""
       : "";
 
-  const initialName = 
-    prefillName || 
-    (userData?.name && userData.name !== 'Agent' ? userData.name : '') || 
+  const locationAreas = {
+    Thane: [
+      "Kasarvadavali",
+      "Ghodbunder Road",
+      "Hiranandani Estate",
+      "Kolshet",
+      "Majiwada",
+      "Manpada",
+      "Panch Pakhadi",
+      "Vartak Nagar",
+      "Other",
+    ],
+    Mumbai: [
+      "Andheri",
+      "Bandra",
+      "Borivali",
+      "Dadar",
+      "Goregaon",
+      "Kandivali",
+      "Malad",
+      "Powai",
+      "Other",
+    ],
+    "Navi Mumbai": [
+      "Airoli",
+      "Belapur",
+      "Ghansoli",
+      "Kharghar",
+      "Nerul",
+      "Panvel",
+      "Vashi",
+      "Other",
+    ],
+  };
+
+  const initialName =
+    prefillName ||
+    (userData?.name && userData.name !== 'Agent' ? userData.name : '') ||
     (currentUser?.displayName && currentUser.displayName !== 'Agent' ? currentUser.displayName : '');
 
-  const initialEmail = 
-    prefillEmail || 
-    currentUser?.email || 
+  const initialEmail =
+    prefillEmail ||
+    currentUser?.email ||
     "";
 
   const [form, setForm] = useState({
@@ -63,11 +110,11 @@ export default function ClientProfile() {
     name:
       initialName,
 
+    phone:
+      prefillPhone || userData?.phone || "",
+
     email:
       initialEmail,
-
-    location:
-      selectedProperty?.location || "",
 
     propertyType:
       safePropertyType,
@@ -88,16 +135,17 @@ export default function ClientProfile() {
   // Keep form name and email synced with authenticated account
   useEffect(() => {
     // 1. Direct state prefill takes highest precedence
-    if (state?.prefillName) {
+    if (state?.prefillName || state?.prefillEmail || state?.prefillPhone) {
       setForm((prev) => ({
         ...prev,
-        name: state.prefillName,
-        email: prev.email || state.prefillEmail || ""
+        name: state.prefillName || prev.name,
+        email: prev.email || state.prefillEmail || "",
+        phone: prev.phone || state.prefillPhone || ""
       }));
     }
 
     if (currentUser) {
-      const bestName = 
+      const bestName =
         state?.prefillName ||
         (userData?.name && userData.name !== 'Agent' ? userData.name : '') ||
         (currentUser.displayName && currentUser.displayName !== 'Agent' ? currentUser.displayName : '');
@@ -111,23 +159,25 @@ export default function ClientProfile() {
         return {
           ...prev,
           name: needsName ? (bestName || prev.name) : prev.name,
-          email: needsEmail ? (currentUser.email || prev.email) : prev.email
+          email: needsEmail ? (currentUser.email || prev.email) : prev.email,
+          phone: prev.phone || userData?.phone || ""
         };
       });
 
       // 2. Extra safety: direct fetch from RTDB in case userData hasn't synchronized yet
-      if (!bestName) {
+      if (!bestName || !userData?.phone) {
         const userDbRef = child(ref(db), `users/${currentUser.uid}`);
         get(userDbRef).then((snapshot) => {
           if (snapshot.exists()) {
             const val = snapshot.val();
-            if (val?.name && val.name !== 'Agent') {
-              setForm((prev) => ({
-                ...prev,
-                name: (!prev.name || prev.name === 'Agent') ? val.name : prev.name,
-                email: !prev.email ? (val.email || currentUser.email) : prev.email
-              }));
-            }
+            setForm((prev) => ({
+              ...prev,
+              name: (!prev.name || prev.name === 'Agent') && val?.name && val.name !== 'Agent'
+                ? val.name
+                : prev.name,
+              email: !prev.email ? (val?.email || currentUser.email) : prev.email,
+              phone: prev.phone || val?.phone || ""
+            }));
           }
         }).catch((err) => console.warn("Failed to fetch user record for name:", err));
       }
@@ -172,6 +222,42 @@ export default function ClientProfile() {
             value === "Flat"
               ? previous.bhk || "2 BHK"
               : "",
+        };
+      }
+
+      if (name === "state") {
+        return {
+          ...previous,
+          state: value,
+          city: "",
+          area: "",
+          customArea: "",
+        };
+      }
+
+      if (name === "city") {
+        return {
+          ...previous,
+          city: value,
+          area: "",
+          customArea: "",
+        };
+      }
+
+      if (name === "area") {
+        return {
+          ...previous,
+          area: value,
+          customArea: "",
+        };
+      }
+
+      if (name === "married" && value !== "Yes") {
+        return {
+          ...previous,
+          married: value,
+          wifeName: "",
+          children: "",
         };
       }
 
@@ -221,6 +307,23 @@ export default function ClientProfile() {
       return;
     }
 
+    if (
+      form.budgetMin &&
+      form.budgetMax &&
+      Number(form.budgetMax) < Number(form.budgetMin)
+    ) {
+      setError("Maximum budget must be greater than or equal to the minimum budget.");
+      return;
+    }
+
+    if (
+      Number(form.budgetMin || 0) > MAX_BUDGET ||
+      Number(form.budgetMax || 0) > MAX_BUDGET
+    ) {
+      setError("Budget must be between ₹0 and ₹1 crore.");
+      return;
+    }
+
     /* Name validation */
 
     if (
@@ -259,7 +362,7 @@ export default function ClientProfile() {
 
       const enquiryRef =
         push(
-          ref(db, "enquiries")
+          ref(db, "inquiries")
         );
 
       await set(
@@ -277,6 +380,40 @@ export default function ClientProfile() {
           email:
             form.email.trim(),
 
+          state:
+            form.state,
+
+          city:
+            form.city,
+
+          area:
+            form.area === "Other"
+              ? form.customArea.trim()
+              : form.area,
+
+          married:
+            form.married,
+
+          wifeName:
+            form.married === "Yes" ? form.wifeName.trim() : "",
+
+          children:
+            form.married === "Yes" ? form.children.trim() : "",
+
+          parent:
+            form.parent.trim(),
+
+          companyName:
+            form.companyName.trim(),
+
+          jobRole:
+            form.jobRole.trim(),
+
+          experience:
+            form.experience.trim(),
+
+          jobLocation:
+            form.jobLocation.trim(),
 
           enquiryType:
             form.enquiryType,
@@ -284,18 +421,29 @@ export default function ClientProfile() {
           propertyType:
             form.propertyType,
 
- 
-
           bhk:
             isFlat
               ? form.bhk
               : "",
 
           preferredLocation:
-            form.location.trim(),
+            [
+              form.area === "Other" ? form.customArea.trim() : form.area,
+              form.city,
+              form.state,
+            ]
+              .filter(Boolean)
+              .join(", "),
 
           budget:
-            form.budget.trim(),
+            form.budgetMin || form.budgetMax
+              ? `${form.budgetMin || "0"} - ${form.budgetMax || "No maximum"}`
+              : "",
+
+          budgetRange: {
+            minimum: form.budgetMin,
+            maximum: form.budgetMax,
+          },
 
           possession:
             form.possession,
@@ -388,7 +536,7 @@ export default function ClientProfile() {
           </p>
 
           <h1>
-            Profile Submitted
+            Enquiry Submitted
           </h1>
 
           <p>
@@ -437,13 +585,14 @@ export default function ClientProfile() {
             BACK
         ================================= */}
 
-        <Link
-          to="/"
+        <button
+          type="button"
+          onClick={() => navigate("/", { replace: true })}
           className="profile-back-button"
         >
           <ArrowLeft size={17} />
           Back to website
-        </Link>
+        </button>
 
         {/* =================================
             HEADER
@@ -456,7 +605,7 @@ export default function ClientProfile() {
           </p>
 
           <h1>
-            Create Your Property Profile
+            Enquiry Form
           </h1>
 
           <p>
@@ -596,6 +745,166 @@ export default function ClientProfile() {
                   onChange={handleChange}
                   placeholder="Enter your email address"
                   autoComplete="email"
+                />
+
+              </div>
+
+              {/* Married */}
+
+              <div className="profile-field">
+
+                <label>
+                  Married
+                </label>
+
+                <select
+                  name="married"
+                  value={form.married}
+                  onChange={handleChange}
+                >
+
+                  <option value="">
+                    Select
+                  </option>
+
+                  <option value="Yes">
+                    Yes
+                  </option>
+
+                  <option value="No">
+                    No
+                  </option>
+
+                </select>
+
+              </div>
+
+              {form.married === "Yes" && (
+                <>
+                  {/* Wife Name */}
+
+                  <div className="profile-field">
+
+                    <label>
+                      Wife Name
+                    </label>
+
+                    <input
+                      type="text"
+                      name="wifeName"
+                      value={form.wifeName}
+                      onChange={handleChange}
+                      placeholder="Enter wife name"
+                    />
+
+                  </div>
+
+                  {/* Children */}
+
+                  <div className="profile-field">
+
+                    <label>
+                      Children
+                    </label>
+
+                    <input
+                      type="text"
+                      name="children"
+                      value={form.children}
+                      onChange={handleChange}
+                      placeholder="Enter children details"
+                    />
+
+                  </div>
+                </>
+              )}
+
+              {/* Parent */}
+
+              <div className="profile-field">
+
+                <label>
+                  Parent
+                </label>
+
+                <input
+                  type="text"
+                  name="parent"
+                  value={form.parent}
+                  onChange={handleChange}
+                  placeholder="Enter parent details"
+                />
+
+              </div>
+
+              {/* Company Name */}
+
+              <div className="profile-field">
+
+                <label>
+                  Company Name
+                </label>
+
+                <input
+                  type="text"
+                  name="companyName"
+                  value={form.companyName}
+                  onChange={handleChange}
+                  placeholder="Enter company name"
+                />
+
+              </div>
+
+              {/* Job Role */}
+
+              <div className="profile-field">
+
+                <label>
+                  Job Role
+                </label>
+
+                <input
+                  type="text"
+                  name="jobRole"
+                  value={form.jobRole}
+                  onChange={handleChange}
+                  placeholder="Enter job role"
+                />
+
+              </div>
+
+              {/* Experience */}
+
+              <div className="profile-field">
+
+                <label>
+                  Experience
+                </label>
+
+                <input
+                  type="text"
+                  name="experience"
+                  value={form.experience}
+                  onChange={handleChange}
+                  placeholder="e.g. 5 years"
+                />
+
+              </div>
+
+              {/* Job Location */}
+
+              <div className="profile-field">
+
+                <label>
+                  Job Location
+                </label>
+
+                <input
+                  type="text"
+                  name="jobLocation"
+                  value={form.jobLocation}
+                  onChange={handleChange}
+                  placeholder="Enter job location"
                 />
 
               </div>
@@ -752,18 +1061,83 @@ export default function ClientProfile() {
               <div className="profile-field">
 
                 <label>
-                  Preferred Location
+                  State
                 </label>
 
-                <input
-                  type="text"
-                  name="location"
-                  value={form.location}
+                <select
+                  name="state"
+                  value={form.state}
                   onChange={handleChange}
-                  placeholder="Enter your preferred location"
-                />
+                >
+                  <option value="">Select state</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                </select>
 
               </div>
+
+              <div className="profile-field">
+
+                <label>
+                  City
+                </label>
+
+                <select
+                  name="city"
+                  value={form.city}
+                  onChange={handleChange}
+                  disabled={!form.state}
+                >
+                  <option value="">Select city</option>
+                  {form.state === "Maharashtra" && (
+                    <>
+                      <option value="Thane">Thane</option>
+                      <option value="Mumbai">Mumbai</option>
+                      <option value="Navi Mumbai">Navi Mumbai</option>
+                    </>
+                  )}
+                </select>
+
+              </div>
+
+              <div className="profile-field">
+
+                <label>
+                  Area
+                </label>
+
+                <select
+                  name="area"
+                  value={form.area}
+                  onChange={handleChange}
+                  disabled={!form.city}
+                >
+                  <option value="">Select area</option>
+                  {(locationAreas[form.city] || []).map((area) => (
+                    <option key={area} value={area}>
+                      {area === "Other" ? "Other / Not listed" : area}
+                    </option>
+                  ))}
+                </select>
+
+              </div>
+
+              {form.area === "Other" && (
+                <div className="profile-field">
+
+                  <label>
+                    Enter Area
+                  </label>
+
+                  <input
+                    type="text"
+                    name="customArea"
+                    value={form.customArea}
+                    onChange={handleChange}
+                    placeholder="Enter your area"
+                  />
+
+                </div>
+              )}
 
               {/* =================================
                   BUDGET
@@ -772,16 +1146,34 @@ export default function ClientProfile() {
               <div className="profile-field">
 
                 <label>
-                  Budget
+                  Budget Range
                 </label>
 
-                <input
-                  type="text"
-                  name="budget"
-                  value={form.budget}
-                  onChange={handleChange}
-                  placeholder="Enter your budget"
-                />
+                <div className="profile-form-grid">
+                  <input
+                    type="number"
+                    name="budgetMin"
+                    value={form.budgetMin}
+                    onChange={handleChange}
+                    placeholder="Minimum budget"
+                    min="0"
+                    max={MAX_BUDGET}
+                    step="10000"
+                    aria-label="Minimum budget in rupees"
+                  />
+
+                  <input
+                    type="number"
+                    name="budgetMax"
+                    value={form.budgetMax}
+                    onChange={handleChange}
+                    placeholder="Maximum budget"
+                    min="0"
+                    max={MAX_BUDGET}
+                    step="10000"
+                    aria-label="Maximum budget in rupees"
+                  />
+                </div>
 
               </div>
 

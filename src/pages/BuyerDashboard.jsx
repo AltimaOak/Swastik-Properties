@@ -25,13 +25,17 @@ const BuyerDashboard = () => {
     const fetchInquiries = async () => {
       if (!currentUser) return;
       try {
-        const snapshot = await get(ref(db, 'inquiries'));
+        const buyerInquiriesQuery = query(
+          ref(db, 'inquiries'),
+          orderByChild('buyerId'),
+          equalTo(currentUser.uid)
+        );
+        const snapshot = await get(buyerInquiriesQuery);
         if (snapshot.exists()) {
           const data = snapshot.val();
-          let allInqs = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-          let userInqs = allInqs.filter(i => i.buyerId === currentUser.uid);
-          userInqs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-          setInquiries(userInqs);
+          const buyerInquiries = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+          buyerInquiries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          setInquiries(buyerInquiries);
         } else {
           setInquiries([]);
         }
@@ -146,4 +150,3 @@ const BuyerDashboard = () => {
 };
 
 export default BuyerDashboard;
-

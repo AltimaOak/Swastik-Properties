@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db } from '../firebase/config';
 import { onAuthStateChanged } from 'firebase/auth';
-import { ref, onValue } from 'firebase/database';
+import { ref, onValue, set } from 'firebase/database';
 
 const AuthContext = createContext({
   currentUser: null,
@@ -32,16 +32,23 @@ export const AuthProvider = ({ children }) => {
         
         // Listen to Realtime Database for live user profile updates
         const userRef = ref(db, `users/${user.uid}`);
-        unsubscribeDb = onValue(userRef, (snapshot) => {
+        unsubscribeDb = onValue(userRef, async (snapshot) => {
           if (snapshot.exists()) {
             setUserData(snapshot.val());
           } else {
-            setUserData({
+            const fallbackProfile = {
               uid: user.uid,
               role: 'buyer',
               email: user.email,
-              name: user.displayName || ''
-            });
+              name: user.displayName || 'Client',
+              createdAt: new Date().toISOString()
+            };
+            setUserData(fallbackProfile);
+            try {
+              await set(userRef, fallbackProfile);
+            } catch (err) {
+              console.warn("RTDB User Profile Auto-Sync:", err.message);
+            }
           }
           setLoading(false);
         }, (error) => {
