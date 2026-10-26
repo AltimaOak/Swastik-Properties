@@ -1148,7 +1148,7 @@ Authorized Signature
                       name="children"
                       value={form.children}
                       onChange={handleChange}
-                      placeholder="Enter children details"
+                      placeholder="Enter Number of Children"
                     />
 
                   </div>
@@ -1169,7 +1169,7 @@ Authorized Signature
                   name="parent"
                   value={form.parent}
                   onChange={handleChange}
-                  placeholder="Enter parent details"
+                  placeholder="Enter parent name(any one)"
                 />
 
               </div>
@@ -1228,7 +1228,7 @@ Authorized Signature
                   name="experience"
                   value={form.experience}
                   onChange={handleChange}
-                  placeholder="e.g. 5 years"
+                  placeholder="Enter experience(year)"
                 />
 
               </div>
